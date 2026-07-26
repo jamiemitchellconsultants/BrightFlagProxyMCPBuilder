@@ -12,6 +12,7 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [1](#entry-add-brightflag-invoice-payment-mcp-builder-guide) | 2026-07-26 | Add BrightFlag invoice-payment MCP builder guide | product | Teach a capability-limited BrightFlag proxy rather than a generic REST client. |
 | [2](#entry-add-staged-brightflag-invoice-payment-mcp-builder-guide) | 2026-07-26 | Add staged BrightFlag invoice-payment MCP builder guide | product | Adopt the staged builder pattern and bind the taught server to five fixed operations: the three accounts-payable batch reads, the invoice-summary read, and the single invoice-payment-status write. |
 | [3](#entry-cross-examine-and-tighten-the-builder-prompts) | 2026-07-26 | Cross-examine and tighten the builder prompts | product | Correct overclaims and sequencing gaps found when a different AI cross-examined the AI-generated prompt set. |
+| [4](#entry-tighten-prompt-guarantees-after-independent-ai-cross-examination) | 2026-07-26 | Tighten prompt guarantees after independent AI cross-examination | product | Express the payment invariant as at most one external attempt per consumed plan, move authoritative OpenAPI acquisition before contract definition, adopt stateless keyset pagination with honest consistency semantics, remove unbounded… |
 
 ---
 
@@ -103,3 +104,27 @@ be cross-examined, preferably by an independent reviewer with different context 
 model. Fluency is not evidence of consistency. Review must trace requirements across stages,
 challenge absolute guarantees, and test whether every acceptance criterion has an implementable
 state and evidence model.
+
+---
+
+<a id="entry-tighten-prompt-guarantees-after-independent-ai-cross-examination"></a>
+
+## Entry 4 — 2026-07-26 — Tighten prompt guarantees after independent AI cross-examination
+
+*Kind: product. Status: accepted.*
+
+## Context
+
+The prompts were generated with substantial AI assistance. A different AI independently cross-examined them and found requirements that sounded plausible in isolation but conflicted across stages or claimed guarantees the proposed state model could not provide.
+
+## Decision
+
+Express the payment invariant as at most one external attempt per consumed plan, move authoritative OpenAPI acquisition before contract definition, adopt stateless keyset pagination with honest consistency semantics, remove unbounded reads, make schema fingerprinting non-recursive, and avoid requiring tenant evidence absent from the reviewed payload.
+
+Keep full corporate MCP authorization alignment and detailed payment-response classification as explicit later work.
+
+## Consequences
+
+The guide now asks implementation agents to enforce properties that can be evidenced. Pagination may repeat bounded upstream reads and does not claim snapshot isolation. The payment flow cannot claim exactly-once delivery across a non-idempotent external boundary.
+
+The decision history also establishes a review principle: fluent AI-generated output is not evidence of consistency and should be cross-examined, preferably by an independent reviewer or model.
