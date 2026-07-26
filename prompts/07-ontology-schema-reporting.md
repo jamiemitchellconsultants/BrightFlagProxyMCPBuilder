@@ -23,7 +23,7 @@ Generate `OntologySchemaDocument` from checked-in contracts and the reviewed Ope
   their evidence requirements rather than as status strings;
 - provenance per entity and field, naming the BrightFlag `operationId` and schema component it came
   from; and
-- a deterministic fingerprint over the whole document.
+- a deterministic fingerprint over the canonical document with the fingerprint property omitted.
 
 State explicitly in the document that the approved-status allow-list is tenant configuration, and
 name it as a required input an ingesting ontology service must obtain separately. Do not embed the
@@ -33,6 +33,7 @@ configured values.
 
 The document must:
 
+- define one canonical JSON encoding used for fingerprinting and output;
 - serialize with ordinal ordering and normalized line endings;
 - be byte-identical across runs, machines, locales, and time zones;
 - contain no timestamps, hostnames, origins, tenant identifiers, tokens, file paths, environment

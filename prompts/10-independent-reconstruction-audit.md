@@ -51,8 +51,8 @@ Confirm independently:
     used.
 20. `paymentStatus` can only be `PAID`; `PARTIALLY PAID`, `POSTED`, and `VOID` are unreachable.
 21. `paymentAmount` is invariantly formatted and `paymentDate` is `YYYY/MM/DD`.
-22. Exactly one POST reaches the fake server per confirmed payment, on every path including timeout,
-    409, and 5xx.
+22. A successfully confirmed plan reaches the fake server once, and no plan causes more than one
+    POST attempt on any path including replay, concurrent confirmation, timeout, 409, and 5xx.
 23. An ambiguous outcome is reported as indeterminate, names the `paymentRef`, and instructs
     reconciliation before re-planning.
 24. The echoed response is verified against the submitted invoice and status.
@@ -95,7 +95,9 @@ Exercise:
 - an amount just inside and just outside the configured tolerance;
 - a cross-currency payment and a zero or negative amount;
 - allow-list entries differing by case, whitespace, or substring;
-- a batch containing an invoice from another tenant;
+- a caller or deployment configured for a different tenant boundary being refused before any
+  BrightFlag call; do not require an object-level cross-tenant fixture when the reviewed BrightFlag
+  payload has no authoritative tenant discriminator;
 - window and epoch-boundary manipulation, including a 32-day request;
 - oversized batches, pages, error bodies, and continuation data;
 - an attempt to add a fifth tool or a sixth operation; and

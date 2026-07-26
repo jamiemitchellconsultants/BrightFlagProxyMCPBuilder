@@ -1,7 +1,8 @@
 # Prompt 3 — Configure the fixed BrightFlag operations
 
-Using the reusable contract, implement Stage 3: secret-free configuration, a reviewed OpenAPI
-snapshot, and a local fake BrightFlag server covering exactly five operations.
+Using the reusable contract, implement Stage 3: secret-free configuration against the reviewed
+OpenAPI snapshot acquired in Prompt 1, and a local fake BrightFlag server covering exactly five
+operations.
 
 Configure:
 
@@ -39,31 +40,15 @@ vault.
 
 ## OpenAPI snapshot
 
-Add an explicit administrative command that fetches `/v3/api-docs/external` from the configured
-origin only. It must use bounded HTTPS, cap the response size, reject cross-origin redirects, write
-atomically, and print a review diff.
+Use the checked-in, reviewed snapshot acquired and validated in Prompt 1. Configuration may select
+its repository path but may not replace its contents or point outside the repository. Runtime
+startup reads that snapshot only: it never fetches the OpenAPI document and never grows the MCP
+surface.
 
-Validate from the reviewed snapshot that:
-
-- the five required `operationId` values exist at the expected method and path;
-- `Batch` provides `batchID`, `batchCreated`, and `customerBatchID`;
-- `BatchDTO` provides `batchID` and an `invoices` array of objects carrying `invoiceID`;
-- `InvoiceSummaryAPI` provides `invoiceID`, `invoiceGroupId`, `invoiceNumber`, `invoiceDate`,
-  `invoiceStatus`, `invoiceStatusChangeTimestamp`, `approvedGrossTotal`, `originalGrossTotal`,
-  `taxTotal`, `exposurePercentage`, `currencyIsoCode`, `invoiceCurrencyDetails`, `vendorLink`, and
-  `matterLink`;
-- `getInvoiceSummaryList` accepts `invoiceStatus`, `invoiceStatusChangeStartDate`,
-  `invoiceStatusChangeEndDate`, `includePreviousDrafts`, `paging.pageSize`, and
-  `paging.pageNumber`; and
-- `InvoicePaymentStatus` provides `invoiceID`, `invoiceNumber`, `vendorRef`, `paymentRef`,
-  `paymentStatus`, `paymentAmount`, `paymentDate`, and `paymentComment`, and requires
-  `paymentStatus`.
-
-If a required operation or field is absent for the tenant's BrightFlag release, fail configuration.
-Do not substitute a similar field, and do not fall back to an operation outside the five.
-
-Runtime startup reads the checked-in snapshot only. It never fetches the OpenAPI document and never
-grows the MCP surface.
+The administrative refresh command created in Prompt 1 remains the only network path allowed to
+update the snapshot. If a later tenant-release review finds a required operation or field absent,
+fail configuration; do not substitute a similar field or fall back to an operation outside the
+five.
 
 ## Fake BrightFlag server
 
@@ -84,7 +69,7 @@ allow-list, and a fixture whose status is inside the allow-list but which was ne
 - Configuration resolves exactly five fixed operations against one origin.
 - Unsafe URLs, a sixth operation, secrets in configuration, unknown properties, and an absent
   tenant boundary all fail.
-- Snapshot validation proves every required operation and field named above.
+- Prompt 1's snapshot validation still proves every required operation and field.
 - Runtime startup performs no OpenAPI network call.
 - Bearer-token redaction is asserted in logs, errors, and audit records.
 - Fake-server tests assert exact paths and reject every other route.

@@ -12,9 +12,10 @@ you finish, you will have:
 - a clear distinction between the builder repository and the server you will build; and
 - a safe read-only task proving the setup works.
 
-You do not need BrightFlag credentials. The learning sequence begins with a synthetic OpenAPI
-snapshot, synthetic invoices and batches, and a local fake endpoint implementing only the five
-BrightFlag operations the server is allowed to call.
+You do not need BrightFlag credentials. The learning sequence begins by acquiring the public
+BrightFlag OpenAPI document as a reviewed, checked-in snapshot. It then uses synthetic invoices and
+batches and a local fake endpoint implementing only the five BrightFlag operations the server is
+allowed to call.
 
 ## 1. Create `MyBrightFlagProxyMCPServer` on GitHub
 
@@ -157,9 +158,10 @@ instead.
 
 ## 8. Introduce a BrightFlag tenant only when prompted
 
-Prompt 3 defines the fixed operations, the origin, and the secret boundary. Until then:
+Prompt 1 acquires the public OpenAPI snapshot without credentials. Prompt 3 defines the runtime
+origin and secret boundary. Until Prompt 3:
 
-- use only the local fake BrightFlag server;
+- make no BrightFlag request except Prompt 1's bounded administrative snapshot fetch;
 - do not add a tenant hostname;
 - do not request or store a bearer token;
 - do not copy real invoices, vendors, matters, or batch exports into fixtures; and
@@ -172,7 +174,7 @@ identity, a non-production tenant if one exists, and synthetic invoices.
 Treat the payment-status endpoint as the sharpest edge in this project. It writes a payment
 assertion into a legal-spend system that finance teams reconcile against real money, it accepts one
 invoice per call, and it is not documented as idempotent. That is why the prompts require a plan,
-an explicit confirmation, and exactly one POST.
+an explicit confirmation, and at most one POST attempt for each atomically consumed plan.
 
 ## 9. Git words used by the guide
 
@@ -221,8 +223,9 @@ or substitute a live BrightFlag endpoint.
 
 ### The agent wants to fetch the OpenAPI document on every run
 
-Only the administrative snapshot command in Prompt 3 may fetch `/v3/api-docs/external`. Runtime
-startup reads the checked-in snapshot. If the agent adds a startup fetch, reject the change.
+Only the administrative snapshot command introduced in Prompt 1 may fetch
+`/v3/api-docs/external`. Runtime startup reads the checked-in snapshot. If the agent adds a startup
+fetch, reject the change.
 
 ### A local agent can edit but cannot push
 

@@ -27,6 +27,14 @@ and BrightFlag's service token is never returned to a caller. Prove both directi
 Under stdio, derive identity from the local configured principal and refuse to run in a mode where
 no principal is established.
 
+## Deferred corporate alignment
+
+This stage establishes the narrow surface, transport authentication, and server-side authorization
+boundary, but does not claim final alignment with the deploying organisation's MCP authorization
+profile, identity-provider discovery, gateway controls, or production trust policy. Record those as
+an explicit deployment gap for later corporate-standard alignment; do not weaken the controls in
+this prompt while that work is deferred.
+
 ## Authorization
 
 Define two capabilities:
