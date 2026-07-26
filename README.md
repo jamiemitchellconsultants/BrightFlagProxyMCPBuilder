@@ -33,7 +33,7 @@ Submit the [reusable contract](prompts/00-reusable-contract.md) first. Then subm
 implementation prompt at a time only after the previous prompt passes its acceptance checks.
 
 1. [Reusable contract](prompts/00-reusable-contract.md)
-2. [Solution scaffold and BrightFlag contracts](prompts/01-solution-scaffold-and-invoice-contracts.md)
+2. [Acquire the OpenAPI snapshot, scaffold the solution, and define contracts](prompts/01-solution-scaffold-and-invoice-contracts.md)
 3. [Adopt Project Narrative](prompts/02-adopt-project-narrative.md)
 4. [Configure the fixed BrightFlag operations](prompts/03-fixed-brightflag-endpoint-configuration.md)
 5. [Define the approved-for-payment evidence rule](prompts/04-approved-for-payment-evidence.md)
@@ -106,7 +106,8 @@ BrightFlag authenticates these with a bearer JWT held by the server, never suppl
 - Uses `runAPIApPaidStatusFeed` with `paymentStatus` fixed to `PAID`.
 - Requires a fresh approval re-check, amount-tolerance and currency validation, caller
   authorization, and an explicit plan-and-confirm step.
-- Issues exactly one POST, with no automatic retry on timeout, 409, or 5xx.
+- Atomically consumes a plan and issues at most one POST attempt for it, with no automatic retry on
+  timeout, 409, or 5xx.
 - Reports an ambiguous outcome as ambiguous and requires reconciliation before re-planning.
 - Version 1 does not send `PARTIALLY PAID`, `POSTED`, or `VOID`.
 

@@ -72,7 +72,9 @@ download, and accounts-payable batch file download.
 - "Paid" is asserted only through `runAPIApPaidStatusFeed` with `paymentStatus` `PAID`. Version 1
   does not send `PARTIALLY PAID`, `POSTED`, or `VOID`.
 - The payment write requires typed validation, caller authorization, plan-before-execute
-  confirmation, and a single outbound POST with no automatic retry.
+  confirmation, and at most one outbound POST attempt per atomically consumed plan token, with no
+  automatic retry. A plan whose POST may have been sent is permanently indeterminate and cannot be
+  reused.
 - Batch lookback defaults to 7 days and has a maximum of 31 days. Every read uses bounded windows,
   projections, page sizes, and response-byte limits.
 - Paging exposed by this server is cursor-based. BrightFlag's `paging.pageNumber` and

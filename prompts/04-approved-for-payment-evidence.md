@@ -8,8 +8,8 @@ whether an invoice is approved for payment, plus validation of the query that se
 An invoice is approved for payment only when both hold:
 
 1. **Release evidence.** Its `invoiceID` appears in an accounts-payable batch returned by
-   `getAPBatches` or `getAPBatchesByDateRange` within the requested window. The batch is the record
-   that BrightFlag released the invoice to accounts payable.
+   `getAPBatchesByDateRange` within the requested bounded window. The batch is the record that
+   BrightFlag released the invoice to accounts payable.
 2. **Status corroboration.** Its `InvoiceSummaryAPI.invoiceStatus` is in the reviewed
    approved-status allow-list configured in Prompt 3.
 

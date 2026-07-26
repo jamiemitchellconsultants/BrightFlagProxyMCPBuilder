@@ -5,7 +5,7 @@ a financial action, not a status update.
 
 `POST /api/v1/invoicePayment/invoice-payment-status` is not documented as idempotent, accepts one
 invoice per call, and BrightFlag echoes the submitted payment status on success. The plan split,
-the single-POST rule, and the audit record exist because of those three facts.
+the at-most-one-attempt rule, and the audit record exist because of those three facts.
 
 ## Payload
 
@@ -51,7 +51,8 @@ The plan performs no write.
 - rejects an expired, replayed, tampered, unknown, or cross-caller token;
 - rejects any attempt to override a planned field at execution time;
 - performs authorization independently of the plan step;
-- issues exactly one POST, with no automatic retry on timeout, transport failure, 409, or 5xx;
+- atomically consumes the plan before attempting the write and issues at most one POST attempt for
+  that plan, with no automatic retry on timeout, transport failure, 409, or 5xx;
 - treats an ambiguous outcome as ambiguous, returning a typed unknown-result error that names the
   `paymentRef` and instructs the operator to reconcile in BrightFlag before re-planning;
 - verifies the echoed response matches the submitted invoice and status, and fails loudly when it
@@ -69,7 +70,8 @@ Prove:
 
 - a valid plan produces the exact expected JSON body, field for field, including invariant decimal
   and `YYYY/MM/DD` date formatting;
-- execution issues exactly one POST and the fake server observes exactly one;
+- successful execution issues one POST, while every plan produces at most one POST attempt even
+  under replay, concurrent confirmation, cancellation, or process-shutdown paths;
 - amount mismatch, currency mismatch, stale or future payment date, non-approved invoice, duplicate
   `paymentRef`, and already-paid invoice are all rejected before any POST;
 - expired, tampered, replayed, and cross-caller tokens are rejected;
@@ -81,7 +83,8 @@ Prove:
 ## Acceptance criteria
 
 - Only `PAID` can be sent, and only through a valid plan.
-- Exactly one outbound POST per confirmed payment, ever.
+- At most one outbound POST attempt per atomically consumed plan token. A plan is never made
+  reusable after execution begins.
 - Ambiguity is reported as ambiguity, never as success or as a silent retry.
 - Formatting, build, and tests succeed.
 

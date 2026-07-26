@@ -12,7 +12,7 @@ The BrightFlag operations and field names cited below come from the external Ope
 ## 1. Approved for payment requires batch release *and* an allow-listed status
 
 **The call.** An invoice is reported as approved for payment only when both hold: its `invoiceID`
-appears in an accounts-payable batch returned by `getAPBatches` or `getAPBatchesByDateRange`, and
+appears in an accounts-payable batch returned by `getAPBatchesByDateRange` for a bounded window, and
 its `InvoiceSummaryAPI.invoiceStatus` is in a reviewed, tenant-configured allow-list. The allow-list
 ships empty and startup fails until an integrator configures it.
 
@@ -52,9 +52,10 @@ the documentation in Prompt 9, under `narrative-required`.
 ## 2. The payment write is gated hard, and deliberately cannot retry
 
 **The call.** `brightflag_mark_invoice_paid` accepts only a server-issued plan token plus explicit
-confirmation. `paymentStatus` is fixed to `PAID`. Exactly one POST is issued per confirmed payment,
-with no automatic retry on timeout, 409, or 5xx. An ambiguous outcome is returned as ambiguous,
-naming the `paymentRef`, and requires reconciliation in BrightFlag before a fresh plan.
+confirmation. `paymentStatus` is fixed to `PAID`. The plan is atomically consumed before execution
+and can cause at most one POST attempt, with no automatic retry on timeout, 409, or 5xx. An ambiguous
+outcome is returned as ambiguous, naming the `paymentRef`, and requires reconciliation in BrightFlag
+before a fresh plan.
 
 **Why.** Three properties of `POST /api/v1/invoicePayment/invoice-payment-status` drive this. It
 accepts one invoice per call, so there is no bulk path to reason about. It is not documented as
