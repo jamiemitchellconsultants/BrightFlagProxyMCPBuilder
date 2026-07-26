@@ -1,0 +1,133 @@
+# Prompt 10 — Independent reconstruction audit
+
+Use this prompt as a fresh task or, ideally, with a different coding agent.
+
+Audit the completed BrightFlag proxy MCP server against the reusable contract and all staged
+prompts. Do not add new capabilities. Fix only confirmed defects.
+
+## Verify the capability ceiling
+
+Confirm independently:
+
+1. The server advertises exactly four tools and one ontology resource, and startup fails if that
+   changes.
+2. Runtime configuration resolves exactly the five fixed BrightFlag operations against one origin.
+3. No caller can supply an origin, path, operation, method, header, query string, page number,
+   status allow-list entry, role, or credential.
+4. The OpenAPI snapshot cannot create a tool, field, or operation at runtime, and no runtime code
+   path fetches `/v3/api-docs/external`.
+5. `downloadInvoiceDocument`, `downloadAPBatchFile`, SCIM, matters, vendors, allocations, purchase
+   orders, pay sites, tax rates, budgets, legal service requests, and reporting are all absent.
+6. No outbound ontology-service call, registration hook, or callback exists.
+
+## Verify approved-for-payment evidence
+
+7. An invoice is reported only with both accounts-payable batch release and an allow-listed status.
+8. The allow-list is tenant configuration, has no shipped default, fails startup when empty, and is
+   matched exactly and case-sensitively.
+9. Batched-but-not-allow-listed and allow-listed-but-not-batched fixtures are both excluded, and
+   the excluded count with observed statuses is reported.
+10. Lookback defaults to 7 days, never exceeds 31, and converts to epoch milliseconds correctly
+    across time zones and daylight-saving boundaries.
+11. `includePreviousDrafts` is false and at most one revision per `invoiceGroupId` is returned, with
+    a typed conflict when a batch releases two revisions.
+12. Cursors are opaque, signed, expiring, bound to caller and window, and reject tampering, replay
+    with a changed window, and cross-caller use.
+13. Fan-out, page, byte, result, timeout, and concurrency ceilings fail closed.
+14. Amounts and currencies are carried unconverted, never summed across currencies, and
+    `exposurePercentage` is surfaced rather than applied.
+15. A batch-released invoice missing from the summary read is reported as a reconciliation gap, not
+    fabricated or dropped.
+
+## Verify the payment mutation
+
+16. Planning re-verifies approval with a fresh read and validates amount tolerance, currency, dates,
+    duplicate `paymentRef`, and already-paid state before any write.
+17. Plan tokens are cryptographically random, expiring, single-use, race-safe, and bound to caller,
+    tenant, invoice identity, amount, currency, `paymentRef`, and contract version.
+18. Execution accepts only a plan token plus explicit confirmation, and no planned field can be
+    overridden at execution.
+19. Authorization is evaluated again at execution and denial occurs before the service credential is
+    used.
+20. `paymentStatus` can only be `PAID`; `PARTIALLY PAID`, `POSTED`, and `VOID` are unreachable.
+21. `paymentAmount` is invariantly formatted and `paymentDate` is `YYYY/MM/DD`.
+22. Exactly one POST reaches the fake server per confirmed payment, on every path including timeout,
+    409, and 5xx.
+23. An ambiguous outcome is reported as indeterminate, names the `paymentRef`, and instructs
+    reconciliation before re-planning.
+24. The echoed response is verified against the submitted invoice and status.
+
+## Verify ontology reporting
+
+25. Tool and resource return byte-identical schema bytes without any BrightFlag call.
+26. Every declared entity, field, and relationship traces to the reviewed snapshot or a checked-in
+    contract, with no invented facts.
+27. Provenance names only the five fixed operations.
+28. Output is byte-identical across runs, locales, and time zones, and the drift check fails on an
+    unregenerated contract change without writing.
+29. Schema artifacts contain no live data, tenant identifier, allow-list value, origin, hostname,
+    token, path, or timestamp.
+
+## Verify platform controls
+
+30. HTTP bearer validation checks signature, issuer, audience, lifetime, not-before, and required
+    claims, and rejects `none`-algorithm tokens.
+31. Caller tokens never reach BrightFlag and the BrightFlag service token never reaches a caller,
+    a log, an error, an audit record, or a trace.
+32. Permissions are deny-by-default and the plan store is caller-scoped, bounded, and expiring.
+33. Rate, concurrency, message-size, response-size, cancellation, and shutdown behavior is bounded,
+    with a stricter limit on the payment tool.
+34. Automated tests contact only the local fake BrightFlag server.
+35. Container, CI, documentation, threat model, runbook, and Narrative governance match the
+    implementation.
+
+## Adversarial tests
+
+Exercise:
+
+- URL, path, query, header, JSON, decimal, date, and log injection;
+- unknown MCP arguments and unknown fields in BrightFlag responses;
+- a BrightFlag response body containing text instructing the server to pay an invoice;
+- plan replay, expiry, argument swapping, cross-caller use, and concurrent confirmation races;
+- a payment timeout after the fake server has received the request;
+- a second confirmation of an already-executed plan;
+- a `paymentRef` reused across two invoices, and two payments for one invoice;
+- an amount just inside and just outside the configured tolerance;
+- a cross-currency payment and a zero or negative amount;
+- allow-list entries differing by case, whitespace, or substring;
+- a batch containing an invoice from another tenant;
+- window and epoch-boundary manipulation, including a 32-day request;
+- oversized batches, pages, error bodies, and continuation data;
+- an attempt to add a fifth tool or a sixth operation; and
+- seeded secrets and business identifiers at every telemetry and generation boundary.
+
+## Commands
+
+From a clean clone, run at minimum:
+
+```bash
+dotnet restore --locked-mode
+dotnet format --verify-no-changes
+dotnet build --no-restore
+dotnet test --no-build
+dotnet list package --vulnerable --include-transitive
+dotnet run --project src/BrightFlagMcpServer -- schema check
+npx --yes --package=github:jamiemitchellconsultants/Narrative narrative check
+git diff --check
+docker build .
+```
+
+If Docker is unavailable, report the gap. Do not contact a live BrightFlag tenant to compensate for
+missing fake-server evidence.
+
+## Report
+
+Report findings by severity with exact file and line references. For each confirmed defect, explain
+the violated requirement, implement the smallest correction, add a regression test, and rerun the
+affected and complete checks.
+
+Finish with a requirements-to-evidence table for all 35 verification points. List residual risks,
+unrun checks, manual BrightFlag controls, and any tenant-configuration incompatibility.
+
+Commit audit fixes locally if needed. Do not push, label, open, or merge a pull request unless
+explicitly requested.
