@@ -7,6 +7,8 @@ Using the reusable contract, implement Stage 9: repeatable delivery for the comp
 - Add a container image built from a pinned, digest-referenced base, running as a non-root user
   with a read-only root filesystem and no build toolchain in the final layer.
 - Expose only the HTTP transport port in the image.
+- Exclude Prompt 8's dev token-issuing tool and local JWKS trust provider fixtures from this image;
+  prove their absence rather than merely their inactivity.
 - Produce a reproducible build and record the source revision.
 - Emit a software bill of materials and fail the build on known-critical vulnerabilities.
 - Add a health endpoint that reports readiness without contacting BrightFlag and without revealing
@@ -35,19 +37,24 @@ Write documentation that states:
 - the plan-and-confirm payment lifecycle and the meaning of an ambiguous outcome;
 - what an operator must do when a payment result is unknown;
 - how the ontology schema is consumed by a separate ontology service;
-- the tenant-configuration inputs an integrator must supply; and
-- the operational limits, including lookback, fan-out, page, and rate ceilings.
+- the tenant-configuration inputs an integrator must supply;
+- the operational limits, including lookback, fan-out, page, and rate ceilings; and
+- how to point the caller-identity trust provider at a real identity provider when moving from
+  local development to a live deployment, and what happens under either profile if that step is
+  skipped.
 
 Add a security policy covering credential handling, the untrusted-content boundary, and reporting.
 Add a threat model naming at least: a prompt-injected payment instruction, a replayed plan token, a
 duplicated payment, a widened allow-list, a leaked service token, a compromised cursor-signing key,
-unauthorized read access to the plan store, and an ontology schema carrying live data.
+unauthorized read access to the plan store, a local development identity-trust provider or
+dev-token tool reachable in a production deployment, and an ontology schema carrying live data.
 
 ## Runbook
 
 Document how to rotate the BrightFlag token, rotate the cursor-signing key, refresh the OpenAPI
 snapshot and review its diff, change the approved-status allow-list, respond to a duplicate
-payment, and roll back a release. Each entry names who approves it and what evidence is retained.
+payment, switch the caller-identity trust provider from local development to a live identity
+provider, and roll back a release. Each entry names who approves it and what evidence is retained.
 
 The cursor-signing key rotation entry must cover: generating a new key under a new key identifier;
 deploying it so verification accepts both the new and the immediately prior key identifier, while
@@ -61,6 +68,8 @@ a fresh window, which is expected, tested behavior rather than an incident.
 ## Acceptance criteria
 
 - The container builds, starts, serves `/mcp`, and passes health checks with no BrightFlag call.
+- The dev token-issuing tool and local JWKS trust provider fixtures are verifiably absent from the
+  built image.
 - CI runs every gate named above and is green.
 - Documentation matches the implemented surface exactly, with no aspirational capability.
 - The threat model and runbook are specific to this server, not generic advice.
