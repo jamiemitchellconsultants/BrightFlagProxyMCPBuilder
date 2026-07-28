@@ -15,9 +15,9 @@ Using the reusable contract, implement Stage 9: repeatable delivery for the comp
 ## Continuous integration
 
 Add workflows that run restore in locked mode, format verification, build with warnings as errors,
-tests, the ontology-schema drift check, dependency and secret scanning, and container build. Keep
-live BrightFlag sandbox tests behind an explicit opt-in that is off in normal CI. Pin actions by
-commit SHA and grant least-privilege permissions.
+tests, the ontology-schema drift check (the `schema check` command from Prompt 7), dependency and
+secret scanning, and container build. Keep live BrightFlag sandbox tests behind an explicit opt-in
+that is off in normal CI. Pin actions by commit SHA and grant least-privilege permissions.
 
 ## Configuration and secrets
 
@@ -30,7 +30,7 @@ tolerance outside its permitted range.
 
 Write documentation that states:
 
-- the three capabilities and the five BrightFlag operations, with the excluded operations named;
+- the three capabilities and the four BrightFlag operations, with the excluded operations named;
 - the definitions of approved for payment and paid, with their evidence requirements;
 - the plan-and-confirm payment lifecycle and the meaning of an ambiguous outcome;
 - what an operator must do when a payment result is unknown;
@@ -40,14 +40,23 @@ Write documentation that states:
 
 Add a security policy covering credential handling, the untrusted-content boundary, and reporting.
 Add a threat model naming at least: a prompt-injected payment instruction, a replayed plan token, a
-duplicated payment, a widened allow-list, a leaked service token, and an ontology schema carrying
-live data.
+duplicated payment, a widened allow-list, a leaked service token, a compromised cursor-signing key,
+unauthorized read access to the plan store, and an ontology schema carrying live data.
 
 ## Runbook
 
-Document how to rotate the BrightFlag token, refresh the OpenAPI snapshot and review its diff,
-change the approved-status allow-list, respond to a duplicate payment, and roll back a release.
-Each entry names who approves it and what evidence is retained.
+Document how to rotate the BrightFlag token, rotate the cursor-signing key, refresh the OpenAPI
+snapshot and review its diff, change the approved-status allow-list, respond to a duplicate
+payment, and roll back a release. Each entry names who approves it and what evidence is retained.
+
+The cursor-signing key rotation entry must cover: generating a new key under a new key identifier;
+deploying it so verification accepts both the new and the immediately prior key identifier, while
+new cursors are only ever issued and signed under the new one; retiring the prior key identifier
+from verification no sooner than the maximum cursor lifetime after cutover, so no cursor issued
+under it is still outstanding; and the alternative scheduled procedure for a suspected-compromise
+rotation, where the prior key identifier is retired from verification immediately instead, and
+every caller with a cursor in flight simply receives a clean rejection and restarts pagination from
+a fresh window, which is expected, tested behavior rather than an incident.
 
 ## Acceptance criteria
 

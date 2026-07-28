@@ -11,13 +11,14 @@ Confirm independently:
 
 1. The server advertises exactly four tools and one ontology resource, and startup fails if that
    changes.
-2. Runtime configuration resolves exactly the five fixed BrightFlag operations against one origin.
+2. Runtime configuration resolves exactly the four fixed BrightFlag operations against one origin.
 3. No caller can supply an origin, path, operation, method, header, query string, page number,
    status allow-list entry, role, or credential.
 4. The OpenAPI snapshot cannot create a tool, field, or operation at runtime, and no runtime code
    path fetches `/v3/api-docs/external`.
-5. `downloadInvoiceDocument`, `downloadAPBatchFile`, SCIM, matters, vendors, allocations, purchase
-   orders, pay sites, tax rates, budgets, legal service requests, and reporting are all absent.
+5. The unwindowed `getAPBatches` batch listing, `downloadInvoiceDocument`, `downloadAPBatchFile`,
+   SCIM, matters, vendors, allocations, purchase orders, pay sites, tax rates, budgets, legal
+   service requests, and reporting are all absent.
 6. No outbound ontology-service call, registration hook, or callback exists.
 
 ## Verify approved-for-payment evidence
@@ -32,7 +33,12 @@ Confirm independently:
 11. `includePreviousDrafts` is false and at most one revision per `invoiceGroupId` is returned, with
     a typed conflict when a batch releases two revisions.
 12. Cursors are opaque, signed, expiring, bound to caller and window, and reject tampering, replay
-    with a changed window, and cross-caller use.
+    with a changed window, and cross-caller use. Verification accepts a current or documented prior
+    signing-key identifier and rejects an unrecognized one, and a runbook procedure exists for
+    rotating the key without an undocumented hard cutover. The signing key is sourced from a
+    configured secret provider rather than generated in-process, is redacted everywhere the
+    BrightFlag bearer token is redacted, and is identical across every instance in a multi-instance
+    deployment.
 13. Fan-out, page, byte, result, timeout, and concurrency ceilings fail closed.
 14. Amounts and currencies are carried unconverted, never summed across currencies, and
     `exposurePercentage` is surfaced rather than applied.
@@ -62,7 +68,7 @@ Confirm independently:
 25. Tool and resource return byte-identical schema bytes without any BrightFlag call.
 26. Every declared entity, field, and relationship traces to the reviewed snapshot or a checked-in
     contract, with no invented facts.
-27. Provenance names only the five fixed operations.
+27. Provenance names only the four fixed operations.
 28. Output is byte-identical across runs, locales, and time zones, and the drift check fails on an
     unregenerated contract change without writing.
 29. Schema artifacts contain no live data, tenant identifier, allow-list value, origin, hostname,
@@ -74,7 +80,8 @@ Confirm independently:
     claims, and rejects `none`-algorithm tokens.
 31. Caller tokens never reach BrightFlag and the BrightFlag service token never reaches a caller,
     a log, an error, an audit record, or a trace.
-32. Permissions are deny-by-default and the plan store is caller-scoped, bounded, and expiring.
+32. Permissions are deny-by-default and the plan store is caller-scoped, bounded, and expiring, and
+    its declared single-instance or multi-instance topology is actually enforced.
 33. Rate, concurrency, message-size, response-size, cancellation, and shutdown behavior is bounded,
     with a stricter limit on the payment tool.
 34. Automated tests contact only the local fake BrightFlag server.
@@ -100,7 +107,7 @@ Exercise:
   payload has no authoritative tenant discriminator;
 - window and epoch-boundary manipulation, including a 32-day request;
 - oversized batches, pages, error bodies, and continuation data;
-- an attempt to add a fifth tool or a sixth operation; and
+- an attempt to add a fifth tool or a fifth operation; and
 - seeded secrets and business identifiers at every telemetry and generation boundary.
 
 ## Commands

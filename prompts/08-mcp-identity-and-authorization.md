@@ -49,6 +49,13 @@ evaluate per call including the execute step of a plan, and record every decisio
 The plan store is caller-scoped, capacity-bounded, and expiring. A plan issued to one caller is
 invisible and unusable to another.
 
+State and enforce exactly one topology: either the deployment runs a single server instance, so an
+in-process plan store is sufficient and horizontal scaling of this service is out of scope for
+version 1; or the deployment may run more than one instance, in which case the plan store must be
+externally shared so a plan created against one instance can be executed against another without
+session affinity, consistent with the stateless transport above. Do not ship an in-process-only
+plan store silently alongside multi-instance deployment guidance elsewhere in the documentation.
+
 ## Hardening
 
 - Enforce request-size, concurrency, and per-caller rate limits, with a stricter limit on the
@@ -68,7 +75,10 @@ Prove:
 - a caller cannot execute another caller's plan;
 - caller tokens never reach the outbound BrightFlag request and the BrightFlag token never reaches
   a response;
-- rate limits and size limits are enforced; and
+- rate limits and size limits are enforced;
+- the declared topology holds: a plan created against one instance can be executed against another
+  when multi-instance operation is declared, or single-instance operation is documented and
+  enforced when it is not; and
 - text embedded in a BrightFlag response that instructs the server to change behavior changes
   nothing.
 
@@ -76,6 +86,8 @@ Prove:
 
 - Both transports serve the same narrow surface with the same authorization outcome.
 - Authorization is server-side, deny-by-default, and re-evaluated at execution.
+- The plan store's single-instance or multi-instance topology is stated and enforced, not left
+  implicit.
 - Formatting, build, and tests succeed.
 
 Commit locally. Use `narrative-required` and record the decision to validate caller tokens

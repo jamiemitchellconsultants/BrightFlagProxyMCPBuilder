@@ -74,11 +74,10 @@ It also exposes the read-only resource:
 The plan/execute split is part of the payment capability, not a generic workflow engine. The
 payment tool accepts only a server-issued, caller-bound, expiring plan for one invoice.
 
-## The five fixed BrightFlag operations
+## The four fixed BrightFlag operations
 
 | Purpose | Method and path | `operationId` |
 |---|---|---|
-| List accounts-payable batches | `GET /api/ap-batch/v1` | `getAPBatches` |
 | List accounts-payable batches in a window | `GET /api/ap-batch/v1/{startEpochTime}/{endEpochTime}` | `getAPBatchesByDateRange` |
 | List invoice identifiers in a batch | `GET /api/ap-batch/v1/batch/{batchID}/invoices` | `getBatchInvoices` |
 | Read invoice summaries | `GET /api/v1/invoice-summary` | `getInvoiceSummaryList` |
@@ -127,7 +126,8 @@ The server must not:
 
 - accept an arbitrary origin, path, operation, query string, HTTP method, or header;
 - publish tools dynamically from the OpenAPI document;
-- call any BrightFlag operation outside the five listed above;
+- call any BrightFlag operation outside the four listed above, including the unwindowed
+  `getAPBatches` batch listing;
 - download invoice documents or accounts-payable batch files;
 - treat an invoice status alone as proof that an invoice is approved for payment;
 - send a payment status other than `PAID`;
