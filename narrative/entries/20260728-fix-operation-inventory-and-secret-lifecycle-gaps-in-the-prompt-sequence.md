@@ -2,7 +2,7 @@
 date: 2026-07-28
 slug: fix-operation-inventory-and-secret-lifecycle-gaps-in-the-prompt-sequence
 title: "Fix operation inventory and secret-lifecycle gaps in the prompt sequence"
-summary: "Removed `getAPBatches` from the fixed operation set entirely, updating the contract, README, and every affected prompt (1, 3, 5, 9, 10) in lockstep rather than documenting it as intentionally unused dead configuration."
+summary: "Removed `getAPBatches` from the fixed operation set entirely, updating the contract, README, and every affected prompt (1, 3, 5, 9, 11) in lockstep rather than documenting it as intentionally unused dead configuration."
 kind: product
 status: accepted
 sequence: 2026-07-28T06:32:51.000Z
@@ -26,11 +26,11 @@ specified.
 ## Decision
 
 Removed `getAPBatches` from the fixed operation set entirely, updating the contract, README, and
-every affected prompt (1, 3, 5, 9, 10) in lockstep rather than documenting it as intentionally unused
+every affected prompt (1, 3, 5, 9, 11) in lockstep rather than documenting it as intentionally unused
 dead configuration.
 
 Added a `schema check` requirement to Prompt 7 (exact invocation, exit-code contract, no MCP listener
-or BrightFlag call) so Prompt 10's audit command is backed by something the sequence actually builds,
+or BrightFlag call) so Prompt 11's audit command is backed by something the sequence actually builds,
 and cross-referenced it from Prompt 9's CI step.
 
 For the payment plan token: required CSPRNG generation with at least 128 bits of entropy and no
@@ -62,7 +62,7 @@ and rotate.
 
 The prompts' stated operation inventory now matches what any correct implementation actually calls,
 so an integrator reading the fixed-operation table won't wire up, test, and expose an endpoint with
-no caller. An agent following Prompt 10 literally can complete its audit without hitting a command
+no caller. An agent following Prompt 11 literally can complete its audit without hitting a command
 the earlier stages never specified.
 
 The cursor-signing key and plan token now carry the same lifecycle rigor as the BrightFlag bearer

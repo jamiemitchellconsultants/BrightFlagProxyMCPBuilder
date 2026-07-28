@@ -1,4 +1,4 @@
-# Prompt 10 — Independent reconstruction audit
+# Prompt 11 — Independent reconstruction audit
 
 Use this prompt as a fresh task or, ideally, with a different coding agent.
 
@@ -90,6 +90,13 @@ Confirm independently:
 34. Automated tests contact only the local fake BrightFlag server.
 35. Container, CI, documentation, threat model, runbook, and Narrative governance match the
     implementation.
+36. The homelab deployment artifacts pin an immutable image, enforce the documented single-instance
+    topology and container hardening, keep secrets and private signing material outside the image
+    and Compose model, provide HTTPS only to explicitly allowed LAN clients, preserve the
+    non-production guard on local identity, and have validation evidence that makes no live
+    BrightFlag call or payment. The documented Windows baseline uses Linux containers, PowerShell
+    scripts, narrow Defender Firewall rules, NTFS ACLs, valid certificate trust, and an honest,
+    tested or explicitly manual Docker Desktop reboot-start procedure.
 
 ## Adversarial tests
 
@@ -129,10 +136,12 @@ dotnet run --project src/BrightFlagMcpServer -- schema check
 npx --yes --package=github:jamiemitchellconsultants/Narrative narrative check
 git diff --check
 docker build .
+docker compose -f deploy/homelab/compose.yaml config
 ```
 
 If Docker is unavailable, report the gap. Do not contact a live BrightFlag tenant to compensate for
-missing fake-server evidence.
+missing fake-server evidence. If Prompt 10 chose different checked-in paths or validation commands,
+run those exact equivalents and record them.
 
 ## Report
 
@@ -140,7 +149,7 @@ Report findings by severity with exact file and line references. For each confir
 the violated requirement, implement the smallest correction, add a regression test, and rerun the
 affected and complete checks.
 
-Finish with a requirements-to-evidence table for all 35 verification points. List residual risks,
+Finish with a requirements-to-evidence table for all 36 verification points. List residual risks,
 unrun checks, manual BrightFlag controls, and any tenant-configuration incompatibility.
 
 Commit audit fixes locally if needed. Do not push, label, open, or merge a pull request unless

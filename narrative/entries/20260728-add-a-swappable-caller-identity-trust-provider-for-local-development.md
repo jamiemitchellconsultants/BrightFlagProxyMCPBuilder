@@ -40,7 +40,7 @@ Guarded both additions the same way Prompt 3 already guards the BrightFlag origi
 never merely warn - if the local trust provider is selected under a profile not explicitly marked
 non-production, and exclude the dev token tool from the delivered container image entirely rather
 than just leaving it inactive. Extended Prompt 9's threat model, runbook (how to switch providers
-when moving off the home lab), and packaging, and Prompt 10's audit (point 30, plus a new
+when moving off the home lab), and packaging, and Prompt 11's audit (point 30, plus a new
 adversarial-test line) to cover the swap and its production guard.
 
 Rejected alternative: a shared static bearer secret. It would have been less work but is exactly the

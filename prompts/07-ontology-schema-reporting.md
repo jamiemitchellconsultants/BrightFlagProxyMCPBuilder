@@ -54,7 +54,7 @@ Add an administrative `schema check` command on the server host, invoked as
 `dotnet run --project src/BrightFlagMcpServer -- schema check`. It regenerates the document in
 memory, compares it byte-for-byte against the checked-in copy, prints a diff on mismatch, and exits
 non-zero without starting an MCP listener, opening a transport, or contacting BrightFlag. This is
-the same drift gate CI runs in Prompt 9 and the mechanism the independent audit in Prompt 10 invokes
+the same drift gate CI runs in Prompt 9 and the mechanism the independent audit in Prompt 11 invokes
 directly.
 
 ## Tests
