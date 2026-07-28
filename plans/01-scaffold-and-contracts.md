@@ -50,8 +50,26 @@ Requirements, all testable:
 - Does not start an MCP listener or open a transport.
 
 Snapshot lands at `openapi/brightflag-external.json`, checked in. Its fingerprint is a SHA-256 over
-the canonical bytes, **computed at load**, not stored in a sidecar — a stored fingerprint is one
-more thing that can drift.
+the stored bytes, **computed at load**, not kept in a sidecar — a stored fingerprint is one more
+thing that can drift.
+
+**Store it canonicalized, not as served.** BrightFlag returns the document minified onto a single
+line: 171,651 bytes, zero newlines. A line diff over that carries no information, so the review diff
+the command prints would be unreadable and every later snapshot change would be unreviewable in a
+pull request. Run the fetched bytes through the same canonical encoding the contracts use — ordinal
+property ordering, two-space indent, LF — before writing, which yields 12,715 diffable lines. Do not
+write a second encoding for this purpose.
+
+Fingerprint the canonical bytes. That has a second effect worth having: the fingerprint moves when
+the document's content moves, rather than when BrightFlag merely reorders the properties it emits.
+It gates cursor validity in Stage 5 and schema generation in Stage 7, so churn there is not free.
+
+State plainly, in the code and in the stage report, that the stored document is deliberately not
+byte-identical to the served one.
+
+Add `.gitattributes` pinning the snapshot to LF. The fingerprint is over exact stored bytes, so a
+CRLF checkout fails validation — and Stage 10 produces a Windows clone. The same file covers the
+generated schema document Stage 7 checks in.
 
 ### 2. Snapshot validation (runs at startup and in tests)
 
@@ -168,6 +186,9 @@ dotnet format --verify-no-changes
 
 Build must produce zero warnings.
 
+The checked-in snapshot must additionally be reviewable as a line diff, and a test must prove its
+fingerprint is unchanged when the served document differs only in property order.
+
 ## Stage boundary
 
 Report: files changed, commands run and their output, the snapshot's byte size and fingerprint, and
@@ -181,8 +202,9 @@ evidence rule.
 
 - `dotnet restore --locked-mode` fails on the first run because no lock file exists yet; generate it
   with a normal restore, check it in, then re-run locked. Expected, not a defect.
-- The snapshot is 171,651 bytes; set the response cap comfortably above that (1 MiB) so a modest
-  tenant-side growth does not fail the fetch spuriously.
+- The served document is 171,651 bytes and the canonical form is roughly twice that, since
+  canonicalizing adds indentation and newlines. The response cap applies to the fetched bytes, but
+  set it well clear of both (4 MiB) so modest tenant-side growth does not fail the fetch spuriously.
 - `Batch.customerID` exists and is the only tenant-ish discriminator in the reviewed payload. Model
   it, but claim nothing about cross-tenant enforcement here — Stage 11 point 32 explicitly relaxes
   that requirement given the payload.
