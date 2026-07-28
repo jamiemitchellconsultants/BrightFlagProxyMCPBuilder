@@ -27,7 +27,7 @@ credential.
 
 Check the reviewed snapshot into the repository. Validate that:
 
-- the five required `operationId` values exist at the expected method and path;
+- the four required `operationId` values exist at the expected method and path;
 - `Batch` provides `batchID`, `batchCreated`, and `customerBatchID`;
 - `BatchDTO` provides `batchID` and an `invoices` array of objects carrying `invoiceID`;
 - `InvoiceSummaryAPI` provides `invoiceID`, `invoiceGroupId`, `invoiceNumber`, `invoiceDate`,
@@ -83,9 +83,13 @@ The contracts must not include:
 
 Cursors are opaque to the caller. Use a stateless, signed, version-tagged keyset cursor containing
 the fixed query window, the last emitted stable sort key, caller binding, contract version,
-configuration fingerprint, snapshot fingerprint, and expiry. It must not contain credentials or
-full response payloads. Reject it for a different caller, window, contract, configuration, or
-snapshot, or after expiry.
+configuration fingerprint, snapshot fingerprint, a signing-key identifier, and expiry. It must not
+contain credentials or full response payloads. Reject it for a different caller, window, contract,
+configuration, or snapshot, or after expiry. Verify the signature against the key named by the
+cursor's key identifier, so more than one key can be valid for verification at once; this is the
+mechanism Prompt 9's key-rotation runbook entry relies on. Prompt 3 configures where the signing-key
+material itself comes from; this stage may sign with a fixed test key so long as the implementation
+does not hard-code that key as the only source runtime configuration can ever supply.
 
 Order results by a documented immutable key with an explicit tie-breaker. Resuming may repeat
 bounded upstream reads; discard every row at or before the last emitted key so the server does not
@@ -105,8 +109,9 @@ packages, payment logic, Docker, or workflows in this stage.
 - `dotnet restore --locked-mode` succeeds.
 - `dotnet build --no-restore` succeeds with zero warnings.
 - `dotnet test --no-build` proves stable identities, decimal/currency validation, closed JSON
-  contracts, unknown-field rejection, cursor opacity and tamper rejection, and byte-identical
-  deterministic serialization.
+  contracts, unknown-field rejection, cursor opacity and tamper rejection, cursor verification
+  against a named current or previous signing key and rejection of an unknown key identifier, and
+  byte-identical deterministic serialization.
 - The checked-in snapshot passes all required operation-and-field validation, and runtime startup
   performs no OpenAPI network call.
 - `dotnet format --verify-no-changes` succeeds.

@@ -37,14 +37,13 @@ Expose one read-only resource:
 
 Do not generate tools or resources from the BrightFlag OpenAPI document at runtime.
 
-## The five fixed BrightFlag operations
+## The four fixed BrightFlag operations
 
 The reviewed OpenAPI document is published at `/v3/api-docs/external` on the configured BrightFlag
 origin. Version 1 of this server calls only these operations:
 
 | Purpose | Method and path | `operationId` |
 |---|---|---|
-| List accounts-payable batches | `GET /api/ap-batch/v1` | `getAPBatches` |
 | List accounts-payable batches in a window | `GET /api/ap-batch/v1/{startEpochTime}/{endEpochTime}` | `getAPBatchesByDateRange` |
 | List invoice identifiers in a batch | `GET /api/ap-batch/v1/batch/{batchID}/invoices` | `getBatchInvoices` |
 | Read invoice summaries | `GET /api/v1/invoice-summary` | `getInvoiceSummaryList` |

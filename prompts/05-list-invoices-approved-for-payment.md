@@ -9,7 +9,7 @@ Implement a BrightFlag API adapter that:
 
 - attaches the bearer token from the configured provider and nothing caller-supplied;
 - always calls `getAPBatchesByDateRange` with epoch-millisecond path segments for the validated
-  explicit or default window; this capability never makes an unwindowed `getAPBatches` call;
+  explicit or default window;
 - calls `getBatchInvoices` per released batch, bounded by a configured maximum batch fan-out;
 - calls `getInvoiceSummaryList` with `includePreviousDrafts=false`, the reviewed status filter
   where it narrows the request usefully, and internal `paging.pageSize` and `paging.pageNumber`;
@@ -47,8 +47,9 @@ Prove against the fake server:
 - the same for a multi-page result driven by a returned keyset cursor, including that bounded
   upstream reads may repeat but rows at or before the last emitted key are discarded and no invoice
   already returned to that cursor sequence is returned again;
-- cursor rejection after caller, window, contract, configuration, or snapshot changes, and
-  documented behavior when upstream data inside the fixed window changes between pages;
+- cursor rejection after caller, window, contract, configuration, or snapshot changes, or an
+  unrecognized signing-key identifier, and documented behavior when upstream data inside the fixed
+  window changes between pages;
 - fan-out, page-count, byte, and result ceilings fail closed with a typed error;
 - a 401 or 403 surfaces as an authorization failure without leaking the token;
 - a 429 retries within the cap and then fails;
