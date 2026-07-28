@@ -8,7 +8,7 @@ changelog generator and must never invent rationale from code or diffs.
 
 ## Read and run the current installer
 
-Read the current `install.md` in `jamiemitchellconsultants/Narrative` before editing. From the root
+Read the current `INSTALL.md` in `jamiemitchellconsultants/Narrative` before editing. From the root
 of the consumer repository, run the installer exactly as its current contract specifies:
 
 ```bash

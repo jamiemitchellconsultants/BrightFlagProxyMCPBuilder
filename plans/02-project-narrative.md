@@ -30,7 +30,7 @@ of `Narrative.md`, and no reconstruction of generated files from memory.
 
 ### 1. Read the installer contract first
 
-Read the current `install.md` in `jamiemitchellconsultants/Narrative` **before** editing anything.
+Read the current `INSTALL.md` in `jamiemitchellconsultants/Narrative` **before** editing anything.
 The installer's contract is authoritative and may have moved; do not run from memory of a previous
 project.
 
@@ -122,5 +122,5 @@ courtesy pause: the label and workflow permissions have to exist before any late
   hand-write the scaffold.
 - Repository settings for Actions permissions may be restricted at the organisation level. If so,
   that is an org-admin action, not a repository one, and blocks the same gate.
-- Should the installer's contract have changed since `install.md` was last read, follow the current
+- Should the installer's contract have changed since `INSTALL.md` was last read, follow the current
   contract, not this plan; note the divergence in the stage report.
