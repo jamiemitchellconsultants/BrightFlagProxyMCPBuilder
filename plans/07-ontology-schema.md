@@ -124,9 +124,9 @@ Do not push unless requested. **Do not begin Stage 8.**
 ## Risks
 
 - Determinism failures usually come from dictionary iteration order, culture-sensitive number
-  formatting, or `\r\n` on a checkout with `core.autocrlf`. Add a `.gitattributes` rule pinning the
-  checked-in document to `LF` so a Windows clone — which Stage 10 will produce — does not fail the
-  drift gate spuriously.
+  formatting, or `\r\n` on a checkout with `core.autocrlf`. Stage 1 already adds `.gitattributes`
+  pinning checked-in JSON to `LF` for the snapshot; confirm it covers the generated schema document
+  too, so a Windows clone — which Stage 10 will produce — does not fail the drift gate spuriously.
 - JSON Schema generation from records can leak assembly or namespace detail into `$id`. Assert the
   document contains no machine paths.
 - The "every field traces to the snapshot" test is the most valuable one here and the easiest to

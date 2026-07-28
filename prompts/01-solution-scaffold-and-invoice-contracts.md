@@ -25,6 +25,19 @@ the response size, reject cross-origin redirects, write atomically, and print a 
 public `https://app.brightflag.com` origin for the initial snapshot; do not request or use a tenant
 credential.
 
+BrightFlag serves that document minified onto a single line. A line diff over the bytes it returns
+therefore carries no information, which would make the review diff this command prints unreadable
+and every later change to the snapshot unreviewable in a pull request. Store the snapshot in the
+deterministic canonical encoding defined below instead — ordinal property ordering, fixed
+indentation, normalized line endings — and compute its fingerprint over those canonical bytes. Use
+that one encoding; do not write a second one for this purpose. Two things follow, and both are
+intended: the stored document is reviewable line by line, and its fingerprint changes when the
+document's content changes rather than when BrightFlag reorders the properties it emits. Record
+explicitly that the stored snapshot is deliberately not byte-identical to the served document.
+
+Pin the checked-in snapshot to LF through `.gitattributes`. Its fingerprint is over its exact stored
+bytes, so a CRLF checkout would fail validation on a Windows clone.
+
 Check the reviewed snapshot into the repository. Validate that:
 
 - the four required `operationId` values exist at the expected method and path;
@@ -114,6 +127,8 @@ packages, payment logic, Docker, or workflows in this stage.
   byte-identical deterministic serialization.
 - The checked-in snapshot passes all required operation-and-field validation, and runtime startup
   performs no OpenAPI network call.
+- The checked-in snapshot is stored in the canonical encoding, is reviewable as a line diff, and its
+  fingerprint is proven stable when the served document changes only its property order.
 - `dotnet format --verify-no-changes` succeeds.
 - Tests prove no contract can carry an arbitrary origin, raw HTTP detail, credential, page number,
   or role.
