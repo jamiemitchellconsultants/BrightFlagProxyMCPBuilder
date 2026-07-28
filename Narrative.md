@@ -13,8 +13,9 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [2](#entry-add-staged-brightflag-invoice-payment-mcp-builder-guide) | 2026-07-26 | Add staged BrightFlag invoice-payment MCP builder guide | product | Adopt the staged builder pattern and bind the taught server to five fixed operations: the three accounts-payable batch reads, the invoice-summary read, and the single invoice-payment-status write. |
 | [3](#entry-cross-examine-and-tighten-the-builder-prompts) | 2026-07-26 | Cross-examine and tighten the builder prompts | product | Correct overclaims and sequencing gaps found when a different AI cross-examined the AI-generated prompt set. |
 | [4](#entry-tighten-prompt-guarantees-after-independent-ai-cross-examination) | 2026-07-26 | Tighten prompt guarantees after independent AI cross-examination | product | Express the payment invariant as at most one external attempt per consumed plan, move authoritative OpenAPI acquisition before contract definition, adopt stateless keyset pagination with honest consistency semantics, remove unbounded… |
-| [5](#entry-fix-operation-inventory-and-secret-lifecycle-gaps-in-the-prompt-sequence) | 2026-07-28 | Fix operation inventory and secret-lifecycle gaps in the prompt sequence | product | Removed `getAPBatches` from the fixed operation set entirely, updating the contract, README, and every affected prompt (1, 3, 5, 9, 10) in lockstep rather than documenting it as intentionally unused dead configuration. |
+| [5](#entry-fix-operation-inventory-and-secret-lifecycle-gaps-in-the-prompt-sequence) | 2026-07-28 | Fix operation inventory and secret-lifecycle gaps in the prompt sequence | product | Removed `getAPBatches` from the fixed operation set entirely, updating the contract, README, and every affected prompt (1, 3, 5, 9, 11) in lockstep rather than documenting it as intentionally unused dead configuration. |
 | [6](#entry-add-a-swappable-caller-identity-trust-provider-for-local-development) | 2026-07-28 | Add a swappable caller-identity trust provider for local development | product | Keep the JWT validation logic in Prompt 8 completely unchanged, and make only the trust root - issuer, audience, and signing-key source - configuration-driven. |
+| [7](#entry-add-a-homelab-local-network-deployment-prompt) | 2026-07-28 | Add a homelab and local-network deployment prompt | product | Add a dedicated stage that turns the packaged server into a reproducible, encrypted, single-host LAN deployment with explicit identity, secret, network, validation, upgrade, and rollback procedures. |
 
 ---
 
@@ -156,11 +157,11 @@ specified.
 ## Decision
 
 Removed `getAPBatches` from the fixed operation set entirely, updating the contract, README, and
-every affected prompt (1, 3, 5, 9, 10) in lockstep rather than documenting it as intentionally unused
+every affected prompt (1, 3, 5, 9, 11) in lockstep rather than documenting it as intentionally unused
 dead configuration.
 
 Added a `schema check` requirement to Prompt 7 (exact invocation, exit-code contract, no MCP listener
-or BrightFlag call) so Prompt 10's audit command is backed by something the sequence actually builds,
+or BrightFlag call) so Prompt 11's audit command is backed by something the sequence actually builds,
 and cross-referenced it from Prompt 9's CI step.
 
 For the payment plan token: required CSPRNG generation with at least 128 bits of entropy and no
@@ -192,7 +193,7 @@ and rotate.
 
 The prompts' stated operation inventory now matches what any correct implementation actually calls,
 so an integrator reading the fixed-operation table won't wire up, test, and expose an endpoint with
-no caller. An agent following Prompt 10 literally can complete its audit without hitting a command
+no caller. An agent following Prompt 11 literally can complete its audit without hitting a command
 the earlier stages never specified.
 
 The cursor-signing key and plan token now carry the same lifecycle rigor as the BrightFlag bearer
@@ -240,7 +241,7 @@ Guarded both additions the same way Prompt 3 already guards the BrightFlag origi
 never merely warn - if the local trust provider is selected under a profile not explicitly marked
 non-production, and exclude the dev token tool from the delivered container image entirely rather
 than just leaving it inactive. Extended Prompt 9's threat model, runbook (how to switch providers
-when moving off the home lab), and packaging, and Prompt 10's audit (point 30, plus a new
+when moving off the home lab), and packaging, and Prompt 11's audit (point 30, plus a new
 adversarial-test line) to cover the swap and its production guard.
 
 Rejected alternative: a shared static bearer secret. It would have been less work but is exactly the
@@ -256,3 +257,62 @@ identical to what ships in production. The cost is a second, symmetric guard (st
 image-exclusion) that has to be built and tested alongside the feature itself, and a runbook entry
 for the one manual step - pointing the trust provider at a real IdP - that a team must not skip when
 moving off local development.
+
+---
+
+<a id="entry-add-a-homelab-local-network-deployment-prompt"></a>
+
+## Entry 7 — 2026-07-28 — Add a homelab and local-network deployment prompt
+
+*Kind: product. Status: accepted.*
+
+## Context
+
+Prompts 8 and 9 made local deployment possible: they added Streamable HTTP, a guarded local caller
+identity trust provider, a hardened container, and an operational runbook. They did not require a
+coding agent to assemble those pieces into instructions that a homelab operator could follow from a
+clean host. Important choices such as the supported container runtime, LAN binding, TLS termination,
+firewall boundary, identity bootstrap, secret-file permissions, persistence, client verification,
+upgrade, and rollback were therefore left to the learner.
+
+That gap is especially risky for this server because a private LAN is not automatically a trusted
+transport or authorization boundary, and the only write capability changes invoice payment state.
+A superficially convenient deployment could expose unencrypted HTTP, put credentials in Compose,
+publish the service through a router, or treat the local development identity provider as suitable
+for a live organisational deployment.
+
+## Decision
+
+Insert Prompt 10 after packaging and before the independent audit. Require it to generate and
+validate an operator-ready, single-instance Windows 11, Docker Desktop, WSL 2 Linux-container, and
+PowerShell baseline for explicitly allowed LAN clients. The deployment uses immutable image digests,
+container hardening, HTTPS through a local reverse proxy or trusted private overlay, narrow Windows
+interface and Defender Firewall rules, NTFS-protected external secret files, and the same JWT
+validation path established by Prompt 8.
+
+Keep private local-identity signing material and the dev token issuer outside the delivered server
+image. Make the local identity path explicitly non-production, bootstrap read-only access first,
+and require a separate deliberate step before payment authorization. Require exact procedures for
+preflight, startup, network isolation, authentication failures, MCP-surface verification,
+redacted diagnostics, upgrade, rollback, and removal. Automate every safe check without contacting
+a live BrightFlag tenant, and label infrastructure checks that remain manual instead of treating
+them as passed.
+
+Move the independent reconstruction audit to Prompt 11 and add an explicit deployment verification
+point so the new stage is independently checked rather than trusted because documentation exists.
+
+## Consequences
+
+A learner now gets a bounded deployment recipe instead of having to invent the security-sensitive
+glue between the packaged image and a LAN MCP client. The primary supported target is intentionally
+narrow: one Windows 11 host, Docker Desktop with its WSL 2 Linux-container backend and Compose, one
+server instance, and named local clients. Windows Server, Windows containers, Podman, NAS appliances,
+orchestration platforms, multiple instances, and public-internet exposure remain unsupported unless
+a later decision adds and tests them. Docker Desktop's interactive startup and reboot behavior must
+be proven or recorded as a manual availability gate rather than hidden behind a container restart
+policy.
+
+The guide can support functional investigation with local JWT issuance, but it cannot turn that
+development trust root into production identity merely by adding TLS or a firewall. Moving to a
+live organisational deployment still requires Prompt 9's identity-provider migration and corporate
+alignment work.

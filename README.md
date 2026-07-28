@@ -42,7 +42,8 @@ implementation prompt at a time only after the previous prompt passes its accept
 8. [Report the BrightFlag ontology schema](prompts/07-ontology-schema-reporting.md)
 9. [Expose the narrow MCP surface securely](prompts/08-mcp-identity-and-authorization.md)
 10. [Package, document, and govern the server](prompts/09-delivery-documentation-and-audit.md)
-11. [Run an independent reconstruction audit](prompts/10-independent-reconstruction-audit.md)
+11. [Generate a homelab and local-network deployment guide](prompts/10-homelab-local-network-deployment.md)
+12. [Run an independent reconstruction audit](prompts/11-independent-reconstruction-audit.md)
 
 Do not paste every prompt into one message. Each stage introduces one bounded capability and asks
 for executable evidence before the next begins.
