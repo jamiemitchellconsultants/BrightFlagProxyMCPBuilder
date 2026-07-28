@@ -27,6 +27,34 @@ and BrightFlag's service token is never returned to a caller. Prove both directi
 Under stdio, derive identity from the local configured principal and refuse to run in a mode where
 no principal is established.
 
+## Caller-identity trust provider
+
+Make the JWT trust root — issuer, audience, and signing-key source — entirely configuration-driven,
+so the validation logic above never changes between environments; only where it trusts keys and an
+issuer from changes. Support two trust-provider implementations:
+
+- a live provider that fetches signing keys from a configured JWKS URL over HTTPS, matching the
+  deploying organisation's identity provider, for example Entra ID's tenant discovery endpoint; and
+- a local provider that loads signing keys from a configuration-supplied JWKS document, for local
+  development and automated tests only.
+
+Both providers feed the same signature, issuer, audience, expiry, not-before, and required-claims
+validation defined above; neither weakens it and neither introduces a second code path through that
+validation. The local provider changes only the source of trusted keys and the accepted issuer, per
+the caching rule already stated.
+
+Fail startup — never merely warn — when the local trust provider is selected under a deployment
+profile not explicitly marked non-production. This is the caller-identity analogue of the
+BrightFlag-origin rule in Prompt 3 that rejects a production profile using no authentication.
+
+Provide a companion dev token-issuing tool, built the same way as Prompt 3's fake BrightFlag server:
+given a requested caller identity (subject, tenant, roles, groups, and scope claims) and an
+optional expiry, wrong issuer, wrong audience, or missing claim, it mints a token signed by the
+local provider's key, matching the claim shape the live provider's tokens carry, so authorization
+logic under test never special-cases which provider issued the token. The tool must itself refuse
+to run under a profile marked production, and must not be present in the container image built in
+Prompt 9.
+
 ## Deferred corporate alignment
 
 This stage establishes the narrow surface, transport authentication, and server-side authorization
@@ -71,6 +99,13 @@ Prove:
 
 - the registered surface is exactly the four tools and one resource, and startup fails otherwise;
 - unauthenticated, expired, wrong-audience, wrong-issuer, and `none`-algorithm tokens are refused;
+- a token from the live trust provider and a token from the local trust provider carrying identical
+  claims produce identical authorization outcomes;
+- startup fails when the local trust provider is selected under a profile marked production;
+- the dev token-issuing tool refuses to run under a profile marked production and is absent from
+  the container image;
+- a token minted by the dev tool with a wrong issuer, wrong audience, missing required claim, or
+  expired lifetime is rejected exactly as the equivalent live-provider token would be;
 - a read-only caller cannot plan or execute a payment;
 - a caller cannot execute another caller's plan;
 - caller tokens never reach the outbound BrightFlag request and the BrightFlag token never reaches
@@ -88,8 +123,13 @@ Prove:
 - Authorization is server-side, deny-by-default, and re-evaluated at execution.
 - The plan store's single-instance or multi-instance topology is stated and enforced, not left
   implicit.
+- The caller-identity trust root is swappable by configuration alone; no authentication code path
+  differs between the live and local trust providers.
+- A profile marked production cannot select the local trust provider, and the dev token-issuing
+  tool cannot run under one or ship in the container image.
 - Formatting, build, and tests succeed.
 
 Commit locally. Use `narrative-required` and record the decision to validate caller tokens
-in-process and keep caller identity separate from the BrightFlag service credential. Do not push
-unless requested.
+in-process, keep caller identity separate from the BrightFlag service credential, and make the
+identity-provider trust root swappable by configuration rather than by code. Do not push unless
+requested.

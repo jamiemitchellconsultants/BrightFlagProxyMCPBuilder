@@ -77,7 +77,10 @@ Confirm independently:
 ## Verify platform controls
 
 30. HTTP bearer validation checks signature, issuer, audience, lifetime, not-before, and required
-    claims, and rejects `none`-algorithm tokens.
+    claims, and rejects `none`-algorithm tokens. The trust root is swappable by configuration
+    between a live JWKS provider and a local development one with no change to the validation code
+    path; the local provider and its dev token-issuing tool cannot be selected under a profile
+    marked production and are absent from the built container image.
 31. Caller tokens never reach BrightFlag and the BrightFlag service token never reaches a caller,
     a log, an error, an audit record, or a trace.
 32. Permissions are deny-by-default and the plan store is caller-scoped, bounded, and expiring, and
@@ -107,7 +110,9 @@ Exercise:
   payload has no authoritative tenant discriminator;
 - window and epoch-boundary manipulation, including a 32-day request;
 - oversized batches, pages, error bodies, and continuation data;
-- an attempt to add a fifth tool or a fifth operation; and
+- an attempt to add a fifth tool or a fifth operation;
+- an attempt to select the local identity trust provider, or to run the dev token-issuing tool,
+  under a profile marked production; and
 - seeded secrets and business identifiers at every telemetry and generation boundary.
 
 ## Commands
