@@ -37,7 +37,15 @@ automated validation.
 
 Any change to the MCP surface, the four operations, the evidence rule, or the payment gate. Public
 internet exposure. Router port forwarding. Any claim that a LAN boundary substitutes for the live
-identity-provider migration.
+identity-provider migration. Any change to Stage 9's CI/CD pipeline or to the project's general
+automated build/test environment: the Windows 11 / Docker Desktop / WSL 2 / PowerShell 7 baseline
+described here is the **deployment target**, not the environment CI or the test suite run in. Stage
+9's CI keeps running on whatever runner it already uses, building the `linux/amd64` image that this
+stage then deploys — this stage does not require Windows runners, does not add a Windows CI job, and
+does not make any non-Windows-specific test depend on a Windows host. Only the checks that are
+inherently Windows-specific (Defender Firewall, NTFS ACLs, certificate store, Task Scheduler, Docker
+Desktop container mode) are Windows-only, and those are the manual gates called out below — everything
+else in "Automated validation" runs the same wherever the rest of the project's tests already run.
 
 ## Work items
 

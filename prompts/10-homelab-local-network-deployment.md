@@ -4,6 +4,15 @@ Using the reusable contract and the artifacts produced by Prompts 1–9, impleme
 an operator-ready deployment path for one MCP server instance on a trusted home-lab or local-network
 host. This stage documents and automates deployment; it must not widen the MCP or BrightFlag surface.
 
+The Windows 11 / Docker Desktop / WSL 2 / PowerShell 7 baseline defined below is the **deployment
+target**, not the project's CI/CD or general automated test environment. Do not change Prompt 9's
+CI/CD pipeline, add a Windows CI job, or make any test outside this stage depend on a Windows host.
+Prompt 9's CI keeps building and testing on whatever runner it already uses, producing the
+`linux/amd64` image this stage deploys. Only checks that are inherently Windows-specific — Defender
+Firewall rules, NTFS ACLs, certificate-store trust, Task Scheduler, Docker Desktop's container mode —
+are Windows-only, and those must be the manual gates called out in "Automated validation" below;
+everything else in that section runs the same wherever the rest of the project's tests already run.
+
 ## Supported baseline
 
 Choose and state one primary, reproducible baseline:
