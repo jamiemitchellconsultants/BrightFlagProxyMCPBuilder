@@ -41,6 +41,18 @@ Register the tool set **statically**. Fail startup if the registered surface is 
 tools and one resource, so a future refactor cannot quietly widen it. This gate is audited at Stage
 11 point 1 and re-verified at Stage 10.
 
+The HTTP transport's TLS posture is a **deployment-time configuration choice**, not a hardcoded
+assumption, because different live deployments sit differently relative to TLS termination:
+
+- **Direct TLS** — the server terminates HTTPS itself; or
+- **Fronted by a trusted proxy** — the server serves plain HTTP on an interface reachable only from a
+  fronting reverse proxy that already terminated TLS (the shape Stage 10's homelab deployment uses).
+
+Exactly one of the two must be selected explicitly; there is no silent third state. **Fail startup**
+if the server would serve plain HTTP without the deployment explicitly marking itself as fronted by a
+trusted proxy — plain HTTP is never an accidental default. When fronted, trust forwarded-protocol
+information only from the configured proxy hop, never from an arbitrary caller-supplied header.
+
 ### 2. Caller identity
 
 Under HTTP, validate the caller's bearer token **in-process before any handler runs**: signature,
@@ -147,6 +159,10 @@ BrightFlag response content treated as untrusted data, never as instruction.
 - rate limits and size limits enforced;
 - **the declared topology holds** — single-instance operation is documented and enforced, and a
   configuration declaring more than one instance fails startup;
+- startup fails if plain HTTP is served without the deployment explicitly marked as fronted by a
+  trusted TLS-terminating proxy;
+- forwarded-protocol information is honoured only from the configured proxy hop, not from an
+  arbitrary caller-supplied header;
 - text embedded in a BrightFlag response instructing the server to change behaviour changes nothing.
 
 ## Acceptance checks
@@ -154,6 +170,8 @@ BrightFlag response content treated as untrusted data, never as instruction.
 - Both transports serve the same narrow surface with the same authorization outcome.
 - Authorization is server-side, deny-by-default, re-evaluated at execution.
 - Single-instance topology is stated and enforced, not left implicit.
+- The HTTP transport's TLS posture — direct or fronted-by-proxy — is an explicit, deployment-time
+  configuration choice with no silent plain-HTTP default.
 - The trust root is swappable by configuration alone; no auth code path differs between providers.
 - A production profile cannot select the local provider, and the dev token tool cannot run under one
   or ship in the image.
@@ -171,9 +189,12 @@ Commit locally. Suggested message: `Serve the narrow MCP surface with swappable 
 
 `narrative-required` when published. Decisions to record: **validating caller tokens in-process**;
 **keeping caller identity separate from the BrightFlag service credential**; **making the trust root
-swappable by configuration rather than by code**; and **declaring a single-instance live topology**,
-with its consequence for the plan store — an outstanding plan does not survive a restart, and
-horizontal scaling is out of scope for version 1 rather than merely untested.
+swappable by configuration rather than by code**; **declaring a single-instance live topology**, with
+its consequence for the plan store — an outstanding plan does not survive a restart, and horizontal
+scaling is out of scope for version 1 rather than merely untested; and **making the HTTP transport's
+TLS posture a deployment-time configuration choice** — direct TLS termination or serving plain HTTP
+behind a trusted fronting proxy — rather than assuming every live deployment looks like Stage 10's
+homelab shape.
 
 Do not push unless requested. **Do not begin Stage 9.**
 
@@ -191,3 +212,7 @@ Do not push unless requested. **Do not begin Stage 9.**
 - An outstanding plan does not survive a restart. That is acceptable for a five-minute capability —
   the caller re-plans and re-planning re-runs the fresh approval check — but Stage 9's runbook has to
   say it rather than leaving an operator to discover it during a deployment.
+- The fronted-by-proxy mode is only safe while the trust boundary is exact. If forwarded-protocol
+  headers were honoured from any caller rather than only the configured proxy hop, a caller on plain
+  HTTP could claim to already be on HTTPS and bypass the intended posture. Configuration must name the
+  trusted hop, not merely enable the mode.
