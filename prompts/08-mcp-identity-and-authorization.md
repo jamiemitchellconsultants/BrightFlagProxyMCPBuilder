@@ -77,12 +77,13 @@ evaluate per call including the execute step of a plan, and record every decisio
 The plan store is caller-scoped, capacity-bounded, and expiring. A plan issued to one caller is
 invisible and unusable to another.
 
-State and enforce exactly one topology: either the deployment runs a single server instance, so an
-in-process plan store is sufficient and horizontal scaling of this service is out of scope for
-version 1; or the deployment may run more than one instance, in which case the plan store must be
-externally shared so a plan created against one instance can be executed against another without
-session affinity, consistent with the stateless transport above. Do not ship an in-process-only
-plan store silently alongside multi-instance deployment guidance elsewhere in the documentation.
+The live deployment runs a **single server instance**. An in-process plan store and payment record
+store are therefore sufficient, and horizontal scaling of this service is out of scope for version 1.
+Document that limit and enforce it at startup: a configuration declaring more than one instance must
+fail, so the in-process store can never run under a deployment that believes it is scaled out. Keep
+both stores behind their interfaces so a later multi-instance decision is a substitution rather than
+a rewrite of the payment path. Do not ship an in-process-only plan store silently alongside
+multi-instance deployment guidance elsewhere in the documentation.
 
 ## Hardening
 
@@ -111,9 +112,8 @@ Prove:
 - caller tokens never reach the outbound BrightFlag request and the BrightFlag token never reaches
   a response;
 - rate limits and size limits are enforced;
-- the declared topology holds: a plan created against one instance can be executed against another
-  when multi-instance operation is declared, or single-instance operation is documented and
-  enforced when it is not; and
+- the declared topology holds: single-instance operation is documented and enforced, and a
+  configuration declaring more than one instance fails startup; and
 - text embedded in a BrightFlag response that instructs the server to change behavior changes
   nothing.
 
@@ -121,8 +121,7 @@ Prove:
 
 - Both transports serve the same narrow surface with the same authorization outcome.
 - Authorization is server-side, deny-by-default, and re-evaluated at execution.
-- The plan store's single-instance or multi-instance topology is stated and enforced, not left
-  implicit.
+- The plan store's single-instance topology is stated and enforced, not left implicit.
 - The caller-identity trust root is swappable by configuration alone; no authentication code path
   differs between the live and local trust providers.
 - A profile marked production cannot select the local trust provider, and the dev token-issuing
@@ -130,6 +129,6 @@ Prove:
 - Formatting, build, and tests succeed.
 
 Commit locally. Use `narrative-required` and record the decision to validate caller tokens
-in-process, keep caller identity separate from the BrightFlag service credential, and make the
-identity-provider trust root swappable by configuration rather than by code. Do not push unless
-requested.
+in-process, keep caller identity separate from the BrightFlag service credential, make the
+identity-provider trust root swappable by configuration rather than by code, and declare and enforce
+a single-instance live topology. Do not push unless requested.

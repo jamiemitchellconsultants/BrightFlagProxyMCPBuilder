@@ -11,9 +11,10 @@ or BrightFlag surface by a single tool, operation, or argument.
 Two framings that govern everything below:
 
 - **This is a dev deployment.** It runs one instance for functional investigation. It does **not**
-  narrow the live topology Stage 8 declared. If Stage 8 declared multi-instance for live, this
-  deployment simply exercises one of them, and the documentation must say so rather than implying
-  the live topology is proven here.
+  narrow the live topology Stage 8 declared — which is single instance, so this deployment happens to
+  match it. The documentation must say the match is a consequence of Stage 8's decision rather than
+  something this stage established: a dev deployment proves nothing about a live topology, even when
+  the two agree.
 - **The container only ever runs on Windows.** The Windows 11 / Docker Desktop / WSL 2 /
   PowerShell 7 baseline is the real target, not a portability compromise. The authoring machine
   being a Mac changes what can be *executed during the build*, not what gets written.
