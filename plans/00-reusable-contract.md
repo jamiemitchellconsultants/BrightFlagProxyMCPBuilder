@@ -91,9 +91,11 @@ model's claim never grant authority.
 ## Decisions carried into every stage
 
 - **Build target:** `~/RiderProjects/BrightFlagProxyMCPServer`, the repository the contract names.
-- **MCP SDK:** `ModelContextProtocol` / `ModelContextProtocol.AspNetCore` **1.4.1** — nuget.org's
-  stable line at time of planning; `2.0.0-rc.2` is prerelease and the contract says stable. Verify
-  again before pinning; if 2.x has gone stable by then, that is a reviewed change, not a silent one.
+- **MCP SDK:** `ModelContextProtocol` / `ModelContextProtocol.AspNetCore` **2.0.0** — nuget.org's
+  stable line. The 1.4.x line was pinned while 2.x was still `2.0.0-rc.2` and the contract says
+  stable; 2.0.0 has since been released, and moving to it was taken as a reviewed change rather than
+  a silent one. Verify again before pinning: a newer stable line is another reviewed change, not a
+  default.
 - **Git policy:** focused local commit per stage. No push, branch, PR, or label unless asked. Each
   stage plan records the `narrative-required` PR content to use when publication is chosen.
 

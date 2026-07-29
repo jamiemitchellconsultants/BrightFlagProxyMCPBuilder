@@ -115,7 +115,7 @@ POST path is unreachable regardless of annotation.
 
 ### 3. MCP SDK first appearance
 
-`ModelContextProtocol` 1.4.1, centrally pinned, with a minimal static tool registration in
+`ModelContextProtocol` 2.0.0, centrally pinned, with a minimal static tool registration in
 `src/BrightFlagMcpServer`. Note the sequencing: Stage 1 forbids MCP packages and Stage 8 owns
 hosting, but this stage's acceptance requires the capability to work "through the MCP tool
 boundary". Introduce the SDK here; Stage 8 hardens rather than introduces.
