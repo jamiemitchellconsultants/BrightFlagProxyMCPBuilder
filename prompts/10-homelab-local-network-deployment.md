@@ -4,6 +4,15 @@ Using the reusable contract and the artifacts produced by Prompts 1–9, impleme
 an operator-ready deployment path for one MCP server instance on a trusted home-lab or local-network
 host. This stage documents and automates deployment; it must not widen the MCP or BrightFlag surface.
 
+The Windows 11 / Docker Desktop / WSL 2 / PowerShell 7 baseline defined below is the **deployment
+target**, not the project's CI/CD or general automated test environment. Do not change Prompt 9's
+CI/CD pipeline, add a Windows CI job, or make any test outside this stage depend on a Windows host.
+Prompt 9's CI keeps building and testing on whatever runner it already uses, producing the
+`linux/amd64` image this stage deploys. Only checks that are inherently Windows-specific — Defender
+Firewall rules, NTFS ACLs, certificate-store trust, Task Scheduler, Docker Desktop's container mode —
+are Windows-only, and those must be the manual gates called out in "Automated validation" below;
+everything else in that section runs the same wherever the rest of the project's tests already run.
+
 ## Supported baseline
 
 Choose and state one primary, reproducible baseline:
@@ -65,15 +74,17 @@ named inbound rules for the selected TCP port, LocalAddress, RemoteAddress clien
 program or service where meaningful, and default-deny behavior. Include equally exact inspection
 and removal commands that affect only those rules.
 
-Use HTTPS for traffic beyond loopback. Choose one documented TLS pattern:
+Use HTTPS for traffic beyond loopback. Use a reverse proxy on the same host to perform SSL/TLS
+termination: the server container speaks plain HTTP on the internal Compose network, only the proxy
+container binds the LAN-facing TLS port, and the server's port is reachable only from that proxy,
+never directly from the LAN. A trusted private overlay providing authenticated encryption may be
+noted as an alternative for a reader with different constraints, but is not the documented, tested
+path.
 
-- a reverse proxy on the same host, with the server port reachable only from that proxy; or
-- a trusted private overlay that provides authenticated encryption and restricts membership.
-
-For the reverse-proxy pattern, include a minimal pinned configuration, certificate provisioning or
-private-CA trust steps, correct forwarding behavior for Streamable HTTP, request and idle timeouts,
-body-size limits aligned with Prompt 8, and a test proving the unencrypted backend port is not
-reachable from another LAN machine. Do not publish the service directly to the public internet,
+Include a minimal pinned proxy configuration, certificate provisioning or private-CA trust steps,
+correct forwarding behavior for Streamable HTTP, request and idle timeouts, body-size limits aligned
+with Prompt 8, and a test proving the unencrypted backend port is not reachable from another LAN
+machine. Do not publish the service directly to the public internet,
 configure automatic router port forwarding, or describe a self-signed certificate as trusted
 without installing its CA certificate on each client.
 

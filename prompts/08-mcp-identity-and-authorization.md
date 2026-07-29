@@ -14,6 +14,14 @@ Support two transports from one composition root:
 Register the tool set statically. Fail startup if the registered surface is not exactly the four
 tools and one resource, so a future refactor cannot quietly widen it.
 
+Make the HTTP transport's TLS posture a deployment-time configuration choice, not a hardcoded
+assumption: either the server terminates TLS itself, or the server serves plain HTTP trusting that a
+configured, named fronting reverse proxy already terminated TLS before forwarding (the shape Stage
+10's homelab deployment uses). Exactly one of the two must be selected explicitly — fail startup if
+the server would serve plain HTTP without the deployment explicitly marked as fronted by a trusted
+proxy, so plain HTTP is never an accidental default. When fronted, honour forwarded-protocol
+information only from that configured proxy hop, never from an arbitrary caller-supplied header.
+
 ## Caller identity
 
 Under HTTP, validate the caller's bearer token in-process before any handler runs: signature,
@@ -113,13 +121,19 @@ Prove:
   a response;
 - rate limits and size limits are enforced;
 - the declared topology holds: single-instance operation is documented and enforced, and a
-  configuration declaring more than one instance fails startup; and
+  configuration declaring more than one instance fails startup;
+- startup fails if plain HTTP is served without the deployment explicitly marked as fronted by a
+  trusted TLS-terminating proxy;
+- forwarded-protocol information is honoured only from the configured proxy hop, not from an
+  arbitrary caller-supplied header; and
 - text embedded in a BrightFlag response that instructs the server to change behavior changes
   nothing.
 
 ## Acceptance criteria
 
 - Both transports serve the same narrow surface with the same authorization outcome.
+- The HTTP transport's TLS posture — direct or fronted-by-proxy — is an explicit, deployment-time
+  configuration choice with no silent plain-HTTP default.
 - Authorization is server-side, deny-by-default, and re-evaluated at execution.
 - The plan store's single-instance topology is stated and enforced, not left implicit.
 - The caller-identity trust root is swappable by configuration alone; no authentication code path
@@ -130,5 +144,7 @@ Prove:
 
 Commit locally. Use `narrative-required` and record the decision to validate caller tokens
 in-process, keep caller identity separate from the BrightFlag service credential, make the
-identity-provider trust root swappable by configuration rather than by code, and declare and enforce
-a single-instance live topology. Do not push unless requested.
+identity-provider trust root swappable by configuration rather than by code, declare and enforce a
+single-instance live topology, and make the HTTP transport's TLS posture — direct termination or
+plain HTTP behind a trusted fronting proxy — a deployment-time configuration choice rather than an
+assumption. Do not push unless requested.
