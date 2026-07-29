@@ -10,11 +10,14 @@ or BrightFlag surface by a single tool, operation, or argument.
 
 Two framings that govern everything below:
 
-- **This is a dev deployment.** It runs one instance for functional investigation. It does **not**
-  narrow the live topology Stage 8 declared — which is single instance, so this deployment happens to
-  match it. The documentation must say the match is a consequence of Stage 8's decision rather than
-  something this stage established: a dev deployment proves nothing about a live topology, even when
-  the two agree.
+- **This is a dev deployment.** It runs one instance for functional investigation, and that choice
+  belongs to this stage, not to Stage 8. Today the two happen to agree — Stage 8 currently declares a
+  single-instance live topology — but the homelab deployment does not derive its instance count from
+  that decision and must not be described as inheriting or narrowing it. If Stage 8 is later revised
+  to a multi-instance live topology, this dev deployment still runs exactly one instance, because a
+  homelab/local-network host is the wrong environment to validate horizontal scaling regardless of
+  what the live topology becomes. The documentation must say the current match is coincidental, not
+  load-bearing: a dev deployment proves nothing about a live topology, whether the two agree or not.
 - **The container only ever runs on Windows.** The Windows 11 / Docker Desktop / WSL 2 /
   PowerShell 7 baseline is the real target, not a portability compromise. The authoring machine
   being a Mac changes what can be *executed during the build*, not what gets written.
@@ -217,8 +220,9 @@ Commit locally. Suggested message: `Add Windows homelab deployment guide and val
 
 `narrative-required` when published, recording: the supported baseline; the network boundary; the
 identity-bootstrap risk (local signing key = impersonation of any caller); the persistence choice;
-and the deliberately unsupported variants. Record explicitly that this is a **dev** deployment that
-does not narrow Stage 8's live topology.
+and the deliberately unsupported variants. Record explicitly that this is a **dev** deployment whose
+single-instance choice is this stage's own, made independently of Stage 8's live topology — currently
+the same value, but not narrowed from it and not tied to it if Stage 8 is later revised.
 
 Do not push unless requested. **Do not begin Stage 11.**
 
