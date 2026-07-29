@@ -11,8 +11,12 @@ Choose and state one primary, reproducible baseline:
 - a Windows 11 host with Docker Desktop, its WSL 2 Linux-container backend, and the bundled Docker
   Compose plugin;
 - one server container using the image produced by Prompt 9;
-- the single-instance topology selected in Prompt 8, with no horizontal scaling or session
-  affinity; and
+- exactly one dev instance, with no horizontal scaling or session affinity — a choice this stage
+  makes for its own homelab/local-network purposes, independently of whatever live topology Prompt 8
+  currently declares. The two happen to match today because Prompt 8 currently declares a
+  single-instance live topology, but this deployment does not derive its instance count from that
+  decision: if Prompt 8 is later revised to a multi-instance live topology, this homelab deployment
+  still runs exactly one instance; and
 - Streamable HTTP at `/mcp`, reachable from explicitly allowed LAN clients only.
 
 Use PowerShell 7 for host-side commands and identify every command that instead runs inside WSL or a
@@ -169,7 +173,7 @@ report skipped checks as passing.
   model, logs, or generated documentation.
 - The local trust provider works only under an explicitly non-production profile, and the guide
   clearly distinguishes homelab investigation from a live organisational deployment.
-- Restart preserves only the state the chosen single-instance topology requires.
+- Restart preserves only the state this stage's own single dev instance requires.
 - The guide honestly proves or qualifies recovery after Windows reboot and Docker Desktop restart.
 - Upgrade and rollback use immutable image digests and retain auditable source revisions.
 - Validation exercises the deployment without making a live BrightFlag call or payment.
