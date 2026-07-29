@@ -107,12 +107,14 @@ Idempotent PowerShell using Windows Defender Firewall to create narrowly named i
 port, `LocalAddress`, `RemoteAddress` clients or VLAN, profile, program/service where meaningful,
 default-deny. Include equally exact inspection and removal commands affecting **only** those rules.
 
-HTTPS beyond loopback. Choose one documented pattern: a reverse proxy on the same host with the
-server port reachable only from it; or a trusted private overlay providing authenticated encryption
-and restricted membership. For the reverse proxy: minimal pinned configuration, certificate
-provisioning or private-CA trust steps, correct forwarding for Streamable HTTP, request and idle
-timeouts, body-size limits aligned with Stage 8, and a test proving the unencrypted backend port is
-unreachable from another LAN machine.
+HTTPS beyond loopback. **Decided: a reverse proxy on the same host performs SSL/TLS termination.**
+The server container itself speaks plain HTTP on the internal Compose network; only the proxy
+container binds the LAN-facing TLS port, and the server's port is reachable only from that proxy —
+never directly from the LAN. Document: minimal pinned proxy configuration, certificate provisioning
+or private-CA trust steps, correct forwarding for Streamable HTTP, request and idle timeouts,
+body-size limits aligned with Stage 8, and a test proving the unencrypted backend port is unreachable
+from another LAN machine. A trusted private overlay providing authenticated encryption may be *noted*
+as an alternative for a reader with different constraints, but is not the documented, tested path.
 
 Windows certificate-store terminology and PowerShell certificate inspection. If a private CA is
 used, install **only its public root** into the appropriate Trusted Root store on each authorised

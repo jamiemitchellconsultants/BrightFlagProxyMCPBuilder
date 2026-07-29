@@ -74,15 +74,17 @@ named inbound rules for the selected TCP port, LocalAddress, RemoteAddress clien
 program or service where meaningful, and default-deny behavior. Include equally exact inspection
 and removal commands that affect only those rules.
 
-Use HTTPS for traffic beyond loopback. Choose one documented TLS pattern:
+Use HTTPS for traffic beyond loopback. Use a reverse proxy on the same host to perform SSL/TLS
+termination: the server container speaks plain HTTP on the internal Compose network, only the proxy
+container binds the LAN-facing TLS port, and the server's port is reachable only from that proxy,
+never directly from the LAN. A trusted private overlay providing authenticated encryption may be
+noted as an alternative for a reader with different constraints, but is not the documented, tested
+path.
 
-- a reverse proxy on the same host, with the server port reachable only from that proxy; or
-- a trusted private overlay that provides authenticated encryption and restricts membership.
-
-For the reverse-proxy pattern, include a minimal pinned configuration, certificate provisioning or
-private-CA trust steps, correct forwarding behavior for Streamable HTTP, request and idle timeouts,
-body-size limits aligned with Prompt 8, and a test proving the unencrypted backend port is not
-reachable from another LAN machine. Do not publish the service directly to the public internet,
+Include a minimal pinned proxy configuration, certificate provisioning or private-CA trust steps,
+correct forwarding behavior for Streamable HTTP, request and idle timeouts, body-size limits aligned
+with Prompt 8, and a test proving the unencrypted backend port is not reachable from another LAN
+machine. Do not publish the service directly to the public internet,
 configure automatic router port forwarding, or describe a self-signed certificate as trusted
 without installing its CA certificate on each client.
 
