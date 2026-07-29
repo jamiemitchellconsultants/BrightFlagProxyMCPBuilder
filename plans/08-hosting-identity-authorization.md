@@ -95,24 +95,26 @@ invisible and unusable to another.
 
 ### 6. Topology — the decision this stage owns
 
-State and enforce **exactly one** topology for the live deployment:
+**Decided: single instance.** The live deployment runs exactly one server instance. The in-process
+plan store and payment record store are therefore sufficient, and horizontal scaling of this service
+is out of scope for version 1.
 
-- **single instance** — in-process plan store and payment record store suffice; horizontal scaling
-  is out of scope for version 1, documented and enforced at startup; or
-- **multi-instance** — the plan store (and the payment record store, which backs the already-paid
-  check) must be **externally shared**, so a plan created against one instance executes against
-  another without session affinity, consistent with the stateless transport.
+This must be **documented and enforced at startup**, not merely assumed: a configuration that
+declares more than one instance fails, so the in-process store can never be running under a
+deployment that believes it is scaled out. The two stores stay behind `IPlanStore` /
+`IPaymentRecordStore`, which is what keeps a later multi-instance decision a substitution rather than
+a rewrite of the payment path.
 
-Do not ship an in-process-only store silently alongside multi-instance guidance elsewhere.
+Rejected: multi-instance with an externally shared plan store. It would add the one database
+dependency the contract otherwise excludes, and Stage 10's homelab deployment runs a single dev
+instance — so the shared store would ship unproven, with the dev deployment implying an assurance the
+live one had not earned. The transport is stateless and session-affinity-free regardless, and Stage 3
+already requires the cursor-signing key to be identical across instances, so nothing about this
+choice is hard to revisit.
 
-Stage 6 put both stores behind `IPlanStore` / `IPaymentRecordStore` precisely so this choice is
-cheap here rather than a rewrite. Points that bear on it: the transport is required to be stateless
-and session-affinity-free; Stage 3 already requires the cursor-signing key to be identical across
-instances; and Prompt 8 explicitly authorises an external shared store, which is the narrow
-exception to the contract's otherwise-blanket exclusion of database access.
-
-**This needs an explicit answer before Stage 8 is implemented.** Neither option is a default that
-can be assumed — declaring the wrong one and enforcing it is worse than either.
+Do not ship an in-process-only store silently alongside multi-instance guidance elsewhere: the
+single-instance limit is a documented, enforced property of version 1, and Stage 9's documentation
+must say so plainly.
 
 ### 7. Deferred corporate alignment
 
@@ -143,15 +145,15 @@ BrightFlag response content treated as untrusted data, never as instruction.
 - caller tokens never reach the outbound BrightFlag request; the BrightFlag token never reaches a
   response;
 - rate limits and size limits enforced;
-- **the declared topology holds** — a plan created against one instance executes against another
-  when multi-instance is declared, or single-instance is documented and enforced when it is not;
+- **the declared topology holds** — single-instance operation is documented and enforced, and a
+  configuration declaring more than one instance fails startup;
 - text embedded in a BrightFlag response instructing the server to change behaviour changes nothing.
 
 ## Acceptance checks
 
 - Both transports serve the same narrow surface with the same authorization outcome.
 - Authorization is server-side, deny-by-default, re-evaluated at execution.
-- The topology is stated and enforced, not left implicit.
+- Single-instance topology is stated and enforced, not left implicit.
 - The trust root is swappable by configuration alone; no auth code path differs between providers.
 - A production profile cannot select the local provider, and the dev token tool cannot run under one
   or ship in the image.
@@ -169,8 +171,9 @@ Commit locally. Suggested message: `Serve the narrow MCP surface with swappable 
 
 `narrative-required` when published. Decisions to record: **validating caller tokens in-process**;
 **keeping caller identity separate from the BrightFlag service credential**; **making the trust root
-swappable by configuration rather than by code**; and **the declared live topology**, with its
-consequence for the plan store.
+swappable by configuration rather than by code**; and **declaring a single-instance live topology**,
+with its consequence for the plan store — an outstanding plan does not survive a restart, and
+horizontal scaling is out of scope for version 1 rather than merely untested.
 
 Do not push unless requested. **Do not begin Stage 9.**
 
@@ -180,6 +183,11 @@ Do not push unless requested. **Do not begin Stage 9.**
   hand-rolled parser in the test.
 - "Identical claims produce identical outcomes" is the test that proves the two providers share one
   code path. Write it as a parameterised test over both providers, not two separate tests.
-- If multi-instance is declared, the shared store becomes infrastructure Stage 10's dev deployment
-  does not exercise. Say so in Stage 9's documentation rather than letting the dev deployment imply
-  the live one is proven.
+- Single instance is only safe while it is enforced. The failure mode is a deployment that scales to
+  two replicas because the transport is stateless and nothing stopped it, at which point a plan
+  issued by one instance is invisible to the other and the already-paid check silently narrows to
+  whichever instance took the call. The startup gate is what makes that a refusal rather than an
+  intermittent payment defect.
+- An outstanding plan does not survive a restart. That is acceptable for a five-minute capability —
+  the caller re-plans and re-planning re-runs the fresh approval check — but Stage 9's runbook has to
+  say it rather than leaving an operator to discover it during a deployment.
