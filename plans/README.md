@@ -22,6 +22,12 @@ OpenAPI document read on 2026-07-28 (114 operations, 70 schemas, byte-identical 
 | [09-delivery-and-governance.md](09-delivery-and-governance.md) | [09](../prompts/09-delivery-documentation-and-audit.md) |
 | [10-homelab-deployment.md](10-homelab-deployment.md) | [10](../prompts/10-homelab-local-network-deployment.md) |
 | [11-reconstruction-audit.md](11-reconstruction-audit.md) | [11](../prompts/11-independent-reconstruction-audit.md) |
+| [12-multi-instance-reclassification.md](12-multi-instance-reclassification.md) † | [12](../prompts/12-multi-instance-reclassification.md) |
+
+† **Contingent stages, not part of version 1.** Stage 12 runs only if corporate governance
+reclassifies this service off the low-use / low-criticality classification under which Stage 8's
+single-instance topology is permitted. It is written in advance so the transformation is a prepared
+sequence rather than an improvisation, and must not be implemented speculatively.
 
 Each plan follows one structure: Context, Preconditions, Scope in, Scope explicitly out, Work items,
 Tests mapped one-to-one onto the prompt's own "Prove" list, Acceptance checks with runnable
@@ -30,7 +36,7 @@ the sequence's value comes from stopping at each boundary.
 
 ## Open decisions the plans surface
 
-Three points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
+Four points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
 position:
 
 - **The invoice-summary join window (Plan 05).** `getInvoiceSummaryList` exposes no `invoiceID`
@@ -42,6 +48,11 @@ position:
   and enforced for the live deployment, and Prompt 10's dev deployment does not narrow it. The plans
   put both stores behind interfaces in Stage 6 so the choice stays cheap, and flag it as needing an
   explicit answer before Stage 8 is implemented.
+- **The shared store, if reclassification happens (Plan 12).** Prompt 12 requires a store with atomic
+  conditional writes and strongly consistent reads but does not name one. Plan 12 picks DynamoDB, on
+  its conditional-write and consistency semantics rather than throughput — at a few interactions an
+  hour throughput decides nothing — and records that this deliberately overrides the contract's
+  exclusion of a database dependency.
 - **Stage 10's Windows-host gates (Plan 10).** The deployment target is Windows unconditionally.
   Anything not executable while authoring on another host is written as a labelled manual gate with
   an exact command and expected result, per the prompt's own escape clause — never reported as
