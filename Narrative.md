@@ -20,6 +20,9 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [9](#entry-store-the-reviewed-openapi-snapshot-canonically-not-as-served) | 2026-07-28 | Store the reviewed OpenAPI snapshot canonically, not as served | product | Canonicalize the fetched document before writing it, using the encoding the prompt already defines rather than a second one written for this purpose, and fingerprint the stored canonical bytes. |
 | [10](#entry-pin-the-mcp-sdk-to-2-0-0) | 2026-07-29 | Pin the MCP SDK to 2.0.0 | product | Pin 2.0.0 and say so in the contract rather than leaving "the stable official SDK" to be resolved per stage. |
 | [11](#entry-declare-a-single-instance-live-topology-for-stage-8) | 2026-07-29 | Declare a single-instance live topology for Stage 8 | product | **The live deployment runs a single server instance.** The in-process plan store and payment record store are therefore sufficient, and horizontal scaling of this service is out of scope for version 1. |
+| [12](#entry-decouple-stage-10-instance-count-from-stage-8-topology) | 2026-07-29 | Decouple Stage 10's instance count from Stage 8's topology | correction | Stage 10's homelab deployment runs one instance as its own choice, not as an inheritance from Stage 8. The present agreement between the two is coincidental, and Stage 10 stays single-instance if Stage 8 is ever revised. |
+| [13](#entry-make-the-tls-termination-posture-a-deployment-time-choice) | 2026-07-29 | Make the TLS termination posture a deployment-time choice | architecture | Stage 10 terminates TLS at a reverse proxy, settling a choice it had left open. Stage 8's HTTP transport gains an explicit deployment-time posture — direct termination or plain HTTP behind a named trusted proxy — with no silent default. |
+| [14](#entry-prepare-contingent-stages-for-a-multi-instance-reclassification) | 2026-07-29 | Prepare contingent stages for a multi-instance reclassification | product | Add Stages 12 and 13 as explicitly contingent, to run only if governance reclassifies this service off the low-use basis for single instance. Stage 12 restores the one-payment guarantee under concurrency; Stage 13 deploys it on AWS. |
 
 ---
 
@@ -583,3 +586,230 @@ supplying shared implementations of two interfaces and raising the declared inst
 reviewed contract change with a store behind it, not a configuration edit.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+---
+
+<a id="entry-decouple-stage-10-instance-count-from-stage-8-topology"></a>
+
+## Entry 12 — 2026-07-29 — Decouple Stage 10's instance count from Stage 8's topology
+
+*Kind: correction. Status: accepted.*
+
+## Context
+
+The preceding entry, [declare a single-instance live topology for Stage 8][entry-11], settled the live
+plan-store topology and corrected `plans/10` in the same change. In doing so it recorded a specific
+framing: that Stage 10's dev deployment "now happens to agree with the live topology, and the
+documentation must say the agreement is a consequence of Stage 8's decision".
+
+That framing is wrong in one direction, and the direction matters. It makes Stage 10's instance count
+*derived* from Stage 8's — which reads correctly today, because both are one, but establishes a
+dependency that does not exist and should not. Stage 10 runs a single instance because a homelab or
+local-network Windows host is the wrong environment in which to validate horizontal scaling. That
+reason is intrinsic to Stage 10 and survives any decision Stage 8 later takes.
+
+The practical failure is easy to picture. If a governance reclassification moves Stage 8 to a
+multi-instance live topology, a reader following the recorded reasoning would conclude that Stage 10's
+homelab guide should follow it, and would set about running two containers on a single Windows host to
+stay consistent with a decision that never governed Stage 10 in the first place.
+
+## Decision
+
+**Stage 10's single-instance choice belongs to Stage 10.** It is not derived from Stage 8's live
+topology, does not narrow it, and does not track it.
+
+The agreement between the two is stated as coincidental rather than load-bearing. If Stage 8 is later
+revised to a multi-instance live topology, Stage 10's homelab deployment still runs exactly one
+instance, and the documentation says so explicitly rather than leaving a reader to infer which way the
+dependency runs.
+
+The prior entry's core decision is untouched: the live deployment runs a single instance, enforced at
+startup. Only its account of *why `plans/10` agrees* is corrected here. That entry stays `accepted`
+rather than `superseded`, because the decision it records still holds and only its supporting
+reasoning about Stage 10 is refined.
+
+While the same files were open, a second scoping gap was closed. Stage 10's Windows 11 / Docker
+Desktop / WSL 2 / PowerShell 7 baseline is the **deployment target**, and nothing in it constrains
+Stage 9's CI pipeline or the project's general automated test environment. Stage 9's CI keeps whatever
+runner it already uses and continues to build the `linux/amd64` image Stage 10 deploys; only the
+inherently Windows-specific checks — Defender Firewall, NTFS ACLs, certificate store, Task Scheduler,
+Docker Desktop's container mode — are Windows-only, and those were already written as labelled manual
+gates.
+
+## Consequences
+
+The two stages are now independent in the direction that matters. A reclassification of Stage 8 is a
+change to one stage rather than a change that propagates into a deployment guide it never governed,
+and the contingent Stage 12 written later the same day depends on exactly this separation holding.
+
+Stage 10's prompt and plan both state the coincidence explicitly, which is more words than a bare
+"single instance" and is the point: the sentence exists to stop a future reader reconstructing the
+dependency that was just removed.
+
+The CI scoping statement forecloses a reading nobody had yet acted on but which the baseline invited —
+that a Windows deployment target implied Windows CI runners. No workflow changed; the constraint was
+never real, and is now written down as not real.
+
+This entry is a correction to recorded reasoning rather than a new decision, and is filed as one.
+Amending the prior entry in place was considered and rejected: an accepted narrative entry is a record
+of what was decided and why at the time, and editing it to read as though the better framing had been
+present from the start would remove the evidence that the framing ever needed correcting.
+
+[entry-11]: #entry-declare-a-single-instance-live-topology-for-stage-8
+
+---
+
+<a id="entry-make-the-tls-termination-posture-a-deployment-time-choice"></a>
+
+## Entry 13 — 2026-07-29 — Make the TLS termination posture a deployment-time choice
+
+*Kind: architecture. Status: accepted.*
+
+## Context
+
+Two related gaps, at opposite ends of the same request path.
+
+Stage 10 offered the operator a choice of two TLS patterns — a reverse proxy on the same host, or a
+trusted private overlay providing authenticated encryption — and documented both. Offering two patterns
+means testing two, or claiming one untested. For a deployment guide whose value is that a learner can
+follow it on a clean host and arrive somewhere known, an unresolved choice at the encryption boundary
+is the wrong place to leave flexibility.
+
+Stage 8, meanwhile, said nothing about where TLS terminates. It specified an authenticated Streamable
+HTTP transport and left the transport-security posture implicit. That is survivable while every
+deployment looks the same, and stops being survivable the moment two do not: a deployment fronted by a
+load balancer or reverse proxy that has already terminated TLS has no supported way to say so, and the
+server has no way to distinguish "plain HTTP because a trusted proxy handled encryption" from "plain
+HTTP because someone misconfigured it".
+
+The second reading is the dangerous one, because it is also the silent one. A server that accepts plain
+HTTP without being told to is one configuration error away from serving an authenticated financial
+capability unencrypted, and nothing in the stage would have refused.
+
+## Decision
+
+**Stage 10 terminates TLS at a reverse proxy on the same host.** The server container speaks plain HTTP
+on the internal Compose network, only the proxy binds the LAN-facing TLS port, and the server's port is
+reachable only from that proxy. The private-overlay pattern may be noted as an alternative for a reader
+with different constraints, but it is not the documented, tested path.
+
+**Stage 8's HTTP transport gains an explicit TLS posture, selected at deployment time**, because
+different live deployments genuinely sit differently relative to termination:
+
+- direct — the server terminates TLS itself; or
+- fronted — the server serves plain HTTP on an interface reachable only from a configured proxy that
+  has already terminated TLS.
+
+Exactly one is selected explicitly and there is no third state. **Startup fails** if the server would
+serve plain HTTP without the deployment explicitly declaring itself fronted. Plain HTTP is never an
+accidental default; it is a thing a deployment has to assert, in the same spirit as the topology gate
+in the preceding entries and Stage 3's refusal of a production profile with no authentication.
+
+When fronted, forwarded-protocol information is honoured **only from the configured proxy hop**, never
+from an arbitrary caller-supplied header. Trusting the header generally would hand any caller on plain
+HTTP the ability to claim it had arrived over HTTPS, which converts the posture from a control into
+decoration.
+
+## Consequences
+
+Stage 10's guide gets shorter and more testable: one pattern, with a proving test that the unencrypted
+backend port is unreachable from another LAN machine. The alternative pattern survives as a note rather
+than as a second thing to keep true.
+
+Stage 8 gains a startup gate and a configuration surface it did not have, and the pairing of posture
+with trusted hop means "fronted" cannot be enabled without naming what is trusted. The failure mode the
+gate prevents — an authenticated financial surface served in the clear because nothing objected — is
+the kind that is invisible until someone looks at a packet capture.
+
+The fronted mode is what makes the later AWS deployment expressible at all: an ALB terminating TLS with
+the task speaking plain HTTP inside the VPC is precisely this shape, and without the posture it would
+have required either an unsupported configuration or a second code path.
+
+This decision is confined to transport security. It does not touch caller identity, which is validated
+in-process from a bearer token regardless of posture, and it grants no exemption anywhere: a fronted
+deployment still authenticates every caller, and a LAN or VPC boundary is still not a substitute for
+the deferred alignment with the deploying organisation's identity provider.
+
+Two of the three commits carrying this work were stranded when the preceding pull request merged before
+they arrived, and reached `main` only when recovered here — the reason this entry and the one before it
+were both written after the fact rather than alongside their merges.
+
+---
+
+<a id="entry-prepare-contingent-stages-for-a-multi-instance-reclassification"></a>
+
+## Entry 14 — 2026-07-29 — Prepare contingent stages for a multi-instance reclassification
+
+*Kind: product. Status: accepted.*
+
+## Context
+
+Stage 8's single-instance topology is permitted by corporate governance because this service is
+classified low-use and low-criticality — predicted load is a few interactions an hour. That
+classification is a fact about today, not a property of the design, and it can be revisited by people
+who are not looking at this repository when they do it.
+
+The risk in that is specific. The single-instance decision was never a scaling opinion; it was the
+*justification* for `IPlanStore` and `IPaymentRecordStore` being in-process at all. Withdrawing the
+justification does not break anything visibly. A second replica starts, the transport is stateless and
+session-affinity-free, health checks pass, and reads work. What fails is that a plan issued by one
+instance is invisible to the other, and the already-paid check narrows to whichever instance took the
+call — surfacing not as an error but as a duplicate payment assertion in a system finance teams
+reconcile against real money.
+
+Left to be improvised under time pressure, the reclassification would most likely be handled as an
+infrastructure change: raise the replica count, add a shared store, ship. The store substitution is the
+easy part and the interfaces were built for it. Restoring the guarantee is not, and is the part a hurried
+change would skip.
+
+## Decision
+
+**Add Stages 12 and 13, both explicitly contingent**, so the transformation is a prepared sequence
+rather than an improvisation. Neither is part of version 1 and neither is to be implemented
+speculatively; Stage 12 requires the reclassification to be recorded and cited before it begins.
+
+Stage 12 carries the substance and is deliberately framed as a correctness stage, not a scaling one:
+
+- shared implementations of both stores, selected and evidenced against atomic conditional writes and
+  strongly consistent reads, with the in-process pair retained because Stage 10 still uses it;
+- plan consumption as a **single atomic conditional transition committed before the outbound POST**, so
+  the losing instance is told it lost by the store rather than by a second read. Every check-then-act in
+  the payment path becomes a conditional write whose failure *is* the rejection;
+- Stage 8's startup gate **inverted rather than deleted** — multi-instance with in-process stores becomes
+  a startup failure, preserving the principle that a wrong topology is a refusal rather than an
+  intermittent payment defect;
+- per-caller rate limits, which silently multiply by instance count and turn a documented limit of N into
+  an enforced limit of N × instances;
+- contract-version rejection across a rolling deploy, which a single-instance deployment never faced.
+
+Stage 13 deploys it on AWS — ECS Fargate, an ALB as the trusted fronting proxy the new TLS posture
+expects, scoped ingress and egress, secrets through the existing providers — and depends on Stage 12
+rather than standing alone.
+
+Recorded explicitly: this **overrides the contract's exclusion of a database dependency**, by authority
+of the reclassification and nothing else. The preceding topology entry rejected a shared plan store
+partly on that exclusion, and the override is filed as an override rather than as a discovery that the
+exclusion was mistaken.
+
+## Consequences
+
+The sequence now contains two stages that are not meant to run, which is a new shape for it and needs
+the contingency stated in the prompts, the plans, and the plans index — a reader who finds Stage 12 and
+implements it because it is numbered has done real harm, since a shared store is a new availability
+dependency in front of a financial write.
+
+Writing the stages before they are needed produced findings that would have been expensive to discover
+during the change itself, and which are the actual value of doing this early: that plan expiry cannot be
+delegated to a store's time-to-live sweep without silently widening every plan's lifetime, that a store
+defaulting to eventually consistent reads will pass every test run against an idle local instance and
+fail intermittently in production, and that the rate-limit multiplication makes a documented control
+false rather than merely loose.
+
+Stage 6's note that keeping both stores behind interfaces would make this a substitution is now testable
+rather than aspirational, and Stage 12 discharges it explicitly.
+
+Stage 11's audit is **not** yet updated. Its topology points already read "single-instance or
+multi-instance", which was written to accommodate either, but nothing in the audit yet examines
+exactly-once payment behaviour under concurrency. That gap is recorded here rather than closed, because
+adding audit points for a contingent stage that may never run would assert more confidence in the
+reclassification happening than currently exists.
