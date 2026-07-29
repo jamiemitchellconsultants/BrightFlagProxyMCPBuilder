@@ -57,7 +57,7 @@ download, and accounts-payable batch file download.
 ## Non-negotiable architecture
 
 - Use the latest supported patch of .NET 10 LTS, C#, ASP.NET Core, and the stable official MCP C#
-  SDK.
+  SDK — `ModelContextProtocol` / `ModelContextProtocol.AspNetCore` **2.0.0**.
 - Support local stdio and remote authenticated stateless Streamable HTTP at `/mcp`.
 - Pin centrally managed NuGet versions after checking current primary documentation.
 - Configure exactly one BrightFlag origin per deployment, outside MCP arguments.
