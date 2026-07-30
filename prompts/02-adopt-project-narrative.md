@@ -71,11 +71,11 @@ instructions, and state in it that it is binding regardless of which tool reads 
 at minimum: that `Narrative.md` is generated and must never be hand-edited; that a decision-bearing
 pull request needs both the `narrative-required` label and the three headings
 `## Narrative Context`, `## Narrative Decision` and `## Narrative Consequences` **in the
-pull-request body**; that the
-maintenance workflow fires on the merge event only, so neither omission can be repaired afterwards
-by labelling; that a narrative-only pull request must not carry the label; and that an accepted
-entry is never rewritten — a later reversal is a new entry of kind `correction` citing the original
-by slug.
+pull-request body**; that
+the maintenance workflow fires on the merge event only, so neither omission can be repaired
+afterwards by labelling; that a narrative-only pull request must not carry the label; and that an
+accepted entry is never rewritten — a later reversal is a new entry of kind `correction` citing the
+original by slug.
 
 State plainly that creating a pull request with a supplied body replaces the repository template
 wholesale, and that doing so without carrying the three sections forward is the most common way an
@@ -99,6 +99,34 @@ the set is maintained when it is not.
 
 This file set is mechanical scaffolding and is part of the unlabelled installation change.
 
+## Pre-merge narrative gate
+
+The scaffolded validation workflow checks fragment validity and compiled freshness. Add a second job
+to it, triggered so that it re-evaluates whenever the label or the body changes:
+
+```yaml
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
+```
+
+**When the pull request carries `narrative-required`**, the job fails unless the body contains all
+three non-empty sections named `## Narrative Context`, `## Narrative Decision` and
+`## Narrative Consequences`.
+
+This mirrors the post-merge gate before merge, and it exists because of a specific, observed
+failure: the label can be applied while the body still lacks the sections, and if the pull request
+merges in that window the maintenance run fails permanently. The action reads the body from the
+merge event payload, so re-running it reads the same incomplete text and the entry must be
+hand-written instead. A pre-merge check turns that into a red result on an open pull request, which
+is fixable.
+
+The job must read the body from an environment variable rather than interpolating it into a shell
+command — pull-request prose is untrusted input.
+
+It deliberately does not check for a *missing* label; only a human can classify a change. It catches
+the case where classification was declared and the evidence was not supplied.
+
 ## Acceptance criteria
 
 - Configuration, preamble, generated narrative, workflows, and pull-request template exist.
@@ -109,6 +137,8 @@ This file set is mechanical scaffolding and is part of the unlabelled installati
   merge-event-only limitation, and the never-rewrite-an-accepted-entry rule.
 - Every pointer file exists, names `CLAUDE.md` as authoritative, restates none of its rules, and
   references no location the repository does not contain.
+- The validation workflow fails a `narrative-required` pull request whose body is missing any of the
+  three sections, and reads the body from an environment variable rather than a shell interpolation.
 - The installation pull request is unlabelled.
 - The learner is explicitly told to stop until the installation is published and merged.
 
