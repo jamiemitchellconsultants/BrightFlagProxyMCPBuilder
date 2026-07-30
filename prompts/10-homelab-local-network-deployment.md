@@ -56,6 +56,20 @@ the operator to supply a digest; never deploy `latest`. Configure:
 - log rotation and a documented location or driver that does not capture secrets; and
 - all required configuration with fail-closed placeholder detection.
 
+Two constraints sit inside that list, and neither announces itself while you are following it.
+
+The image Prompt 9 produces contains **no HTTP client**. The health check has to work with what is
+in the image. Installing a client into the delivered image to make the probe convenient is a change
+to the artefact whose contents Prompt 9 spent a stage proving, and the image verification asserts
+that named things are absent rather than that only expected things are present — so it will not
+object.
+
+**An unset Compose variable is not an error.** It resolves to an empty string, and a port mapping
+whose host part is empty publishes on every interface — the exposure this stage exists to prevent,
+produced by following it, with no warning at any point. Decide how the model fails closed on a
+missing value, and prove it by rendering the model with nothing supplied. A model that is only ever
+rendered with every value present cannot show you the difference.
+
 Do not mount the container engine socket. Do not use host networking, privileged mode, embedded
 credentials, plaintext secret values in Compose, or an automatically downloaded deployment script.
 Keep the Prompt 8 dev token-issuing executable and private signing key outside the server image.
