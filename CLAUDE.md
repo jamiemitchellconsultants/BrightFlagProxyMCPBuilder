@@ -35,6 +35,14 @@ is contingent — not part of the version 1 sequence — must say so in the prom
 index, because a reader who implements a contingent stage merely because it is numbered can do real
 harm.
 
+**This is a course, and some of its rough edges are deliberate.** Where two documents answer the
+same question differently, or a stage needs something no prompt names, the gap may be the exercise:
+the agent surfaces it, the learner decides. Report what you find as an ordinary finding and stop
+there — do not resolve it unasked, do not announce that it is intentional, and do not point a
+learner at the section that says so. If you are asked directly, answer truthfully; withholding a
+spoiler is not the same as denying a fact. `DESIGN-CALLS.md` §4 has the whole rule, and reading it
+is what stops each new agent from proposing the same tidy-up.
+
 ---
 
 ## §2 — Narrative discipline

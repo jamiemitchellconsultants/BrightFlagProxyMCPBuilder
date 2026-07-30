@@ -108,3 +108,53 @@ authorization model — not before.
 **Cost.** The capability the reader asked for first is built third. Anyone skimming the prompt list
 expecting it to match the README's capability order will be briefly confused, which is why both
 documents say so explicitly.
+
+---
+
+## 4. The sequence is left rough where a learner should have to decide
+
+**The call.** This repository is a course, not a specification. Where the sequence leaves a genuine
+tension — two documents that answer the same question differently, a stage that needs something the
+prompt does not name, a limit that is stated in one place and assumed in another — that is often
+deliberate and is not to be smoothed away. The exercise is for the agent to surface it and the
+learner to resolve it from what was surfaced.
+
+Which tensions are deliberate is not listed here, and listing them would defeat the purpose. Assume
+that a discrepancy you have found may be one of them.
+
+**Why.** A learner handed an unambiguous sequence learns to follow instructions. A learner handed a
+sequence containing a real contradiction learns to notice it, weigh it, and choose — which is the
+skill the sequence exists to teach, and the one that matters when the same person later reviews an
+agent's work on something that was never a course.
+
+The mechanism has been observed working. An agent implementing a late stage reported a labelling
+criterion that disagreed with the template installed by an earlier prompt, explained both readings
+and their consequences, and asked. That is the intended shape of the exercise, and a repository
+edited until nothing disagreed would not have produced it.
+
+**Cost.** Real, and worth stating rather than qualifying away. A learner who does not notice a gap
+bears its consequence — for the narrative mechanism specifically, that means an entry has to be
+written by hand as a fragment afterwards, which is recoverable and tedious. Deliberate roughness is
+also indistinguishable from neglect to a reader who does not know the intent, which is why this
+entry exists at all: without it, each new agent rediscovers the same tension and proposes the same
+tidy-up.
+
+**What an agent working in this repository should do.**
+
+- Report a gap as an ordinary finding: what was found, what the readings are, what you would do
+  about each. That is the mechanism working, not a failure of it.
+- Do not resolve it unasked, and do not silently write around it.
+- Do not announce that a tension is intentional, cite this section at a learner, or otherwise hand
+  over the answer. Surfacing a gap is the agent's job; deciding is theirs.
+- **If asked directly, answer truthfully.** Not volunteering a spoiler is not the same as denying a
+  fact. An agent that tells a learner the sequence is consistent when it is not has destroyed the
+  thing the exercise runs on, and no pedagogical intent justifies it.
+
+**Rejected alternatives.** Reconcile every document until the sequence is internally seamless, which
+removes the exercise and produces a specification nobody has to think about. Or annotate each
+deliberate gap in place — `<!-- deliberate, do not fix -->` — which tells the learner the answer at
+exactly the moment they should be working it out, and turns every remaining unannotated
+inconsistency into an accident by implication.
+
+**Changing it** means deciding that this is a specification rather than a course. That is a change
+to what the repository is for, not to how it is written.
