@@ -93,6 +93,34 @@ Record in the repository that these are decision-bearing changes, each requiring
 Lifecycle: labelled project PR merges → automation opens a separate narrative proposal → review and
 merge that proposal **without** the label, to avoid recursion.
 
+### 8. Agent instruction files
+
+The lifecycle in item 7 is only real if the agent running Stage 5 or Stage 8 knows about it. Write
+`CLAUDE.md` at the repository root as the single source of truth, binding regardless of which tool
+reads it, covering: `Narrative.md` is generated and never hand-edited; a decision-bearing PR needs
+**both** the `narrative-required` label **and** `## Narrative Context`, `## Narrative Decision`,
+`## Narrative Consequences` in the PR body; the workflow fires on the merge event only, so neither
+omission is repairable by labelling afterwards; narrative-only PRs carry no label; an accepted entry
+is never rewritten, a reversal is a new `correction` entry citing the original by slug.
+
+Say explicitly that supplying a PR body replaces the template wholesale, and that this is the most
+common way an entry is lost — the failure is silent when the label is missing and a workflow failure
+when the sections are.
+
+Then thin pointers, each naming `CLAUDE.md` as authoritative and restating none of its rules:
+`AGENTS.md`, `.github/copilot-instructions.md`, `GEMINI.md`,
+`.cursor/rules/claude-instructions.mdc` (`alwaysApply: true`),
+`.windsurf/rules/claude-instructions.md` (`trigger: always_on`), and
+`.clinerules/claude-instructions.md`.
+
+Two rules on the pointers, both learned the hard way. They must not duplicate the content, because a
+stale copy is worse than no copy — an agent cannot tell which is current. And they must not cite a
+location the repository does not contain, which is the failure mode in the sibling repository this
+pattern came from: its pointers advertise `.amazonq/rules/` and `.kiro/steering/`, neither of which
+exists, so the list reads as maintained when it is not.
+
+Mechanical scaffolding — part of the unlabelled installation change.
+
 ## Tests
 
 None beyond `narrative check`. This stage adds no code paths.
@@ -103,6 +131,10 @@ None beyond `narrative check`. This stage adds no code paths.
 - `narrative check` returns zero.
 - Workflows and template use the identical label spelling and section headings.
 - No rationale was invented.
+- `CLAUDE.md` states the label rule, the three required PR body headings, the merge-event-only
+  limitation, and the never-rewrite-an-accepted-entry rule.
+- Every pointer file exists, names `CLAUDE.md` as authoritative, restates none of its rules, and
+  cites no location the repository does not contain.
 - The installation PR is unlabelled.
 - The learner has been told, explicitly, to stop until the installation is published and merged.
 
