@@ -247,3 +247,11 @@ Do not push unless requested. **Do not begin Stage 11.**
   guide says operator sign-in is required, full stop.
 - Line endings: the Stage 7 drift gate will fail on a Windows clone without the `.gitattributes`
   rule pinning the checked-in schema document to `LF`.
+- The Stage 9 image carries no HTTP client, so the health check this stage requires cannot be
+  written the obvious way. The tempting resolution — install one into the delivered image — is a
+  change to the Stage 9 artefact, and `scripts/verify-image.sh` asserts that a named list of things
+  is absent rather than that only expected things are present, so it will not object to it.
+- A Compose variable that is unset resolves to an empty string rather than failing. In a port
+  mapping that turns an address-qualified binding into one on every interface, silently, which is
+  the single failure this stage's network boundary exists to prevent. Whichever fail-closed
+  mechanism is chosen, test it by supplying nothing.
