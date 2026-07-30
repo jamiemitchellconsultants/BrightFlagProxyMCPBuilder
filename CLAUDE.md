@@ -44,7 +44,31 @@ meaningful decision — about the taught architecture, the prompt sequence, gove
 correction to an earlier decision — records an entry. This is not optional documentation; it is the
 mechanism this repo is testing.
 
-`Narrative.md` is a **generated file**. Its own first line says so. Never hand-edit it or its Index.
+### Binding rule — you write fragments, never `Narrative.md`
+
+`Narrative.md` is **generated output**. Its own first line says so. **Never author it, hand-edit it,
+or hand-merge it.** The only narrative file you ever write by hand is a fragment under
+`narrative/entries/`.
+
+This is binding, and it covers three cases that get it wrong in different ways:
+
+1. **Adding an entry** — write a fragment. Never append an entry body or an index row to
+   `Narrative.md`. The index is derived; a hand-added row is destroyed by the next compile.
+2. **Changing existing wording** — edit that entry's fragment, never the compiled projection.
+   Subject to the never-rewrite-an-accepted-entry rule below.
+3. **Resolving a merge conflict in `Narrative.md`** — never resolve it by hand, however trivial the
+   markers look. Discard both sides and regenerate. Fragments are the source of truth and merge
+   cleanly, because each entry is a separate file; only the projection collides. Two branches that
+   each added an entry produce a conflict whose correct resolution is the union of the fragments,
+   which the compiler computes and you should not.
+
+Running the compiler is **not** authoring the file. Compilation is deterministic and model-free, so
+the output is a function of the fragments and nothing else. Compile it; never type it.
+
+In this repository the compiled file **is** committed alongside the fragment that changed, because
+`validate-narrative.yml` runs `check`, which fails when the output is stale. Committing generated
+output is not the same as authoring it. (Other repositories in this family invert this and have CI
+recompile on `main`; do not carry that habit across.)
 
 ### The label and the pull-request body are both required
 
@@ -93,9 +117,7 @@ Then **recompile and commit the output**:
 npx --yes --package=github:jamiemitchellconsultants/Narrative narrative compile
 ```
 
-In this repo `Narrative.md` **is** committed alongside its fragments — `validate-narrative.yml` runs
-`check`, which fails when the compiled output is stale. (Other repositories in this family invert
-this and have CI recompile on `main`; do not carry that habit across.)
+Commit the regenerated `Narrative.md` with the fragment, per the binding rule above.
 
 ### Never rewrite an accepted entry
 
