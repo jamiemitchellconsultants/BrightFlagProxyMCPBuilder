@@ -25,6 +25,7 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [14](#entry-prepare-contingent-stages-for-a-multi-instance-reclassification) | 2026-07-29 | Prepare contingent stages for a multi-instance reclassification | product | Add Stages 12 and 13 as explicitly contingent, to run only if governance reclassifies this service off the low-use basis for single instance. Stage 12 restores the one-payment guarantee under concurrency; Stage 13 deploys it on AWS. |
 | [15](#entry-settle-the-open-mechanisms-in-the-stage-12-and-13-plans) | 2026-07-29 | Settle the open mechanisms in the Stage 12 and 13 plans | architecture | DynamoDB backs both shared stores, chosen for atomic conditional writes rather than throughput; strong reads and TTL-as-cleanup-only are correctness requirements; rate limits split between a shared counter and the edge. |
 | [16](#entry-add-binding-agent-instructions-and-teach-the-pattern-in-prompt-2) | 2026-07-30 | Add binding agent instructions and teach the pattern in Prompt 2 | product | Adopt the pattern, adapted rather than copied. `CLAUDE.md` is binding regardless of which tool reads it and is the only place rules live; the six pointers say only that it is authoritative and that instruction changes belong there. `CLAUDE. |
+| [17](#entry-make-fragments-only-a-binding-rule-in-claude-md) | 2026-07-30 | Make fragments-only a binding rule in CLAUDE.md | product | State it as a binding rule with the three cases named separately, because they fail in different ways: - **Adding an entry** — write a fragment. A hand-added index row is destroyed by the next compile, since the index is derived. |
 
 ---
 
@@ -919,3 +920,41 @@ Seven instruction files now exist where there were none, and the pointers are a 
 Prompt 2's scope grows: implementation repositories now get an instruction file set as part of the unlabelled installation change. The two-pull-request lifecycle it already documented becomes enforceable by an agent rather than dependent on the learner remembering.
 
 Deliberately not done: no CI check that a decision-bearing pull request carries the label. That was raised, is still open, and would catch what instructions can only discourage.
+
+---
+
+<a id="entry-make-fragments-only-a-binding-rule-in-claude-md"></a>
+
+## Entry 17 — 2026-07-30 — Make fragments-only a binding rule in CLAUDE.md
+
+*Kind: product. Status: accepted.*
+
+## Context
+
+`CLAUDE.md` said `Narrative.md` was generated and should never be hand-edited, in one sentence. That was enough for the obvious case — appending an entry by hand — and not enough for the case that actually arose.
+
+[PR #28](https://github.com/jamiemitchellconsultants/BrightFlagProxyMCPBuilder/pull/28), the automation's proposal for #26, conflicted on `Narrative.md`. It had branched before #27 added a hand-written entry, so both sides recompiled the projection from different fragment sets. The fragments themselves merged cleanly — entries are separate files and the two sides added disjoint ones — and only the generated file collided.
+
+Nothing in the instructions said what to do. Hand-reconciling the conflict markers would have looked entirely reasonable: the markers were small and the result would have rendered fine. It would also have been wrong, producing an index and entry numbering that the next compile silently discards, and there would have been no signal that anything was lost.
+
+A related gap: the rule needed to distinguish *committing* generated output from *authoring* it. This repository commits the compiled file alongside the fragment because `validate-narrative.yml` runs `check`, which fails when the output is stale. A rule phrased as "never write `Narrative.md`" would read as forbidding that and would break CI on every narrative pull request.
+
+## Decision
+
+State it as a binding rule with the three cases named separately, because they fail in different ways:
+
+- **Adding an entry** — write a fragment. A hand-added index row is destroyed by the next compile, since the index is derived.
+- **Changing wording** — edit that entry's fragment, never the projection.
+- **Resolving a conflict in `Narrative.md`** — discard both sides and recompile, however trivial the markers look. The correct resolution is the union of the fragments, which the compiler computes and a human should not.
+
+Draw the line at authorship rather than at writes: running the compiler is not authoring the file, because compilation is deterministic and model-free, so the output is a function of the fragments and nothing else. "Compile it; never type it." The compiled file stays committed here, and the rule says so explicitly along with the note that other repositories in this family invert that convention.
+
+Rejected: forbidding committed generated output outright, the `BrightFlagCFS` model where CI recompiles on `main` and a check rejects any branch touching the compiled file. That would eliminate this class of conflict entirely rather than prescribing a resolution, but it needs workflow changes here — `validate` would have to stop failing on staleness and something would have to recompile on `main`. Worth considering separately; asserting it in `CLAUDE.md` without the CI to match would just make the instructions wrong.
+
+## Consequences
+
+The conflict resolution that took a diagnosis this session is now a written rule, and the reasoning for it — fragments merge, projections collide — is recorded rather than left to be re-derived.
+
+The rule as written still permits the conflict to occur; it only makes the resolution unambiguous and mechanical. Any narrative pull request merging while a proposal is open will still collide on the compiled file. Removing that requires the rejected alternative above.
+
+The pointer files are unchanged. They restate none of `CLAUDE.md`'s rules by design, so a new rule in §2 needs no corresponding edit in six other places.
