@@ -3,8 +3,8 @@
 Using the reusable contract, implement Stage 2: install Project Narrative before decisions about
 approved-payment evidence, payment writes, and ontology reporting are implemented.
 
-Project Narrative is a deterministic, review-first decision-history mechanism. It is not a
-changelog generator and must never invent rationale from code or diffs.
+Project Narrative is a deterministic, review-first decision-history mechanism. It is not a changelog
+generator and must never invent rationale from code or diffs.
 
 ## Read and run the current installer
 
@@ -67,13 +67,15 @@ The narrative lifecycle above only works if whichever coding agent runs a later 
 about it. Do not leave that to the agent's defaults.
 
 Write `CLAUDE.md` at the implementation repository root as the **single source of truth** for agent
-instructions, and state in it that it is binding regardless of which tool reads it. It must cover, at
-minimum: that `Narrative.md` is generated and must never be hand-edited; that a decision-bearing pull
-request needs both the `narrative-required` label and the three `## Narrative Context`,
-`## Narrative Decision`, `## Narrative Consequences` headings **in the pull-request body**; that the
-maintenance workflow fires on the merge event only, so neither omission can be repaired afterwards by
-labelling; that a narrative-only pull request must not carry the label; and that an accepted entry is
-never rewritten — a later reversal is a new entry of kind `correction` citing the original by slug.
+instructions, and state in it that it is binding regardless of which tool reads it. It must cover,
+at minimum: that `Narrative.md` is generated and must never be hand-edited; that a decision-bearing
+pull request needs both the `narrative-required` label and the three headings
+`## Narrative Context`, `## Narrative Decision` and `## Narrative Consequences` **in the
+pull-request body**; that the
+maintenance workflow fires on the merge event only, so neither omission can be repaired afterwards
+by labelling; that a narrative-only pull request must not carry the label; and that an accepted
+entry is never rewritten — a later reversal is a new entry of kind `correction` citing the original
+by slug.
 
 State plainly that creating a pull request with a supplied body replaces the repository template
 wholesale, and that doing so without carrying the three sections forward is the most common way an
@@ -90,8 +92,8 @@ Then add **thin pointer files** for the other tier-one agents, each of which say
 - `.windsurf/rules/claude-instructions.md` — Windsurf, with `trigger: always_on` front matter;
 - `.clinerules/claude-instructions.md` — Cline.
 
-The pointers must **not** restate the rules. Duplicated instructions drift, and a stale copy is worse
-than no copy because an agent cannot tell which is current. Do not list a pointer location the
+The pointers must **not** restate the rules. Duplicated instructions drift, and a stale copy is
+worse than no copy because an agent cannot tell which is current. Do not list a pointer location the
 repository does not actually contain — a pointer to an absent directory teaches a future reader that
 the set is maintained when it is not.
 

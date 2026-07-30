@@ -24,15 +24,16 @@ contains **prompts and plans, not the server**. The implementation lives elsewhe
 - **Where a plan and its prompt disagree, the prompt wins**, and the divergence is a defect in the
   plan, not a permitted variation.
 
-Every plan follows one structure: Context, Preconditions, Scope in, Scope explicitly out, Work items,
-Tests mapped one-to-one onto the prompt's own "Prove" list, Acceptance checks with runnable commands,
-Stage boundary, and Risks. Every plan ends by naming what must **not** begin next, because the
-sequence's value comes from stopping at each boundary. Preserve that shape.
+Every plan follows one structure: Context, Preconditions, Scope in, Scope explicitly out, Work
+items, Tests mapped one-to-one onto the prompt's own "Prove" list, Acceptance checks with runnable
+commands, Stage boundary, and Risks. Every plan ends by naming what must **not** begin next, because
+the sequence's value comes from stopping at each boundary. Preserve that shape.
 
-A change that adds, removes, or renumbers a stage must update `prompts/`, the matching `plans/` file,
-and the table plus open-decisions list in `plans/README.md` in the same change. A stage that is
-contingent — not part of the version 1 sequence — must say so in the prompt, the plan, and the index,
-because a reader who implements a contingent stage merely because it is numbered can do real harm.
+A change that adds, removes, or renumbers a stage must update `prompts/`, the matching `plans/`
+file, and the table plus open-decisions list in `plans/README.md` in the same change. A stage that
+is contingent — not part of the version 1 sequence — must say so in the prompt, the plan, and the
+index, because a reader who implements a contingent stage merely because it is numbered can do real
+harm.
 
 ---
 
@@ -47,10 +48,9 @@ mechanism this repo is testing.
 
 ### The label and the pull-request body are both required
 
-Entries are produced by the [Project Narrative](https://github.com/jamiemitchellconsultants/Narrative)
-action, wired up in `.github/workflows/`. On merge it reads the pull request and proposes a fragment
-on a separate draft pull request. It needs **two** things, and fails or silently does nothing if
-either is absent:
+Entries are produced by the [Project Narrative][pn] action, wired up in `.github/workflows/`. On
+merge it reads the pull request and proposes a fragment on a separate draft pull request. It needs
+**two** things, and fails or silently does nothing if either is absent:
 
 1. The `narrative-required` label, applied **before merge**.
 2. Three headings in the pull-request **body**, named exactly:
@@ -58,18 +58,19 @@ either is absent:
    - `## Narrative Decision`
    - `## Narrative Consequences`
 
-`.github/pull_request_template.md` already contains these. **Do not bypass the template.** Creating a
-pull request with `gh pr create --body ...` replaces the template wholesale, which is the single
+`.github/pull_request_template.md` already contains these. **Do not bypass the template.** Creating
+a pull request with `gh pr create --body ...` replaces the template wholesale, which is the single
 easiest way to lose a narrative entry — it has already happened. If you pass `--body`, carry the
 three sections in it yourself.
 
 Missing label: the workflow exits quietly and no entry is ever produced. Missing sections with the
 label present: the workflow **fails visibly**. Neither is recoverable after the fact — the workflow
-triggers on the merge event only, so labelling a merged pull request does nothing. A missed entry has
-to be written by hand as a fragment.
+triggers on the merge event only, so labelling a merged pull request does nothing. A missed entry
+has to be written by hand as a fragment.
 
 Do **not** apply `narrative-required` to a narrative-only pull request (a proposed fragment, or a
-repair like this one), because that would recursively create an entry about maintaining the narrative.
+repair like this one), because that would recursively create an entry about maintaining the
+narrative.
 
 ### Writing a fragment by hand
 
@@ -89,7 +90,7 @@ Only needed when an entry was missed, or when correcting the record. Create
 Then **recompile and commit the output**:
 
 ```bash
-npx --yes github:jamiemitchellconsultants/Narrative compile
+npx --yes --package=github:jamiemitchellconsultants/Narrative narrative compile
 ```
 
 In this repo `Narrative.md` **is** committed alongside its fragments — `validate-narrative.yml` runs
@@ -101,7 +102,8 @@ this and have CI recompile on `main`; do not carry that habit across.)
 An accepted entry records what was decided and why **at the time**. When a later decision refines or
 reverses it, add a new entry with `kind: correction` that links back by slug — do not edit the
 original so it reads as though the better framing had been there all along. That would destroy the
-evidence that the framing ever needed correcting, which is the one thing this repo is trying to keep.
+evidence that the framing ever needed correcting, which is the one thing this repo is trying to
+keep.
 
 Cite entries by slug (`#entry-<slug>`), never by number. Numbers are positional and shift as entries
 are added.
@@ -117,8 +119,8 @@ are added.
   has happened twice. Branch from `main` and accept a textual reference to an unmerged decision.
 - After pushing follow-up commits to a branch with an open pull request, say so explicitly. A pull
   request merged before later commits arrive silently drops them, and the merge looks clean.
-- Verify what actually landed with `git log origin/main --oneline` after a merge, not by trusting the
-  pull request's state.
+- Verify what actually landed with `git log origin/main --oneline` after a merge, not by trusting
+  the pull request's state.
 - Commit or push only when asked. Never force-push a shared branch or delete a remote branch unless
   explicitly requested.
 
@@ -127,8 +129,10 @@ are added.
 - Prompts and plans wrap at 100 columns.
 - No emoji.
 - Use absolute dates (`YYYY-MM-DD`), never relative ones.
-- State limitations plainly rather than qualifying them away. A dev deployment proves nothing about a
-  live topology; a retention window is not a guarantee; an untested variant is not supported. The
+- State limitations plainly rather than qualifying them away. A dev deployment proves nothing about
+  a live topology; a retention window is not a guarantee; an untested variant is not supported. The
   sequence's credibility rests on this.
 - Do not describe a skipped check as passing. If something cannot be executed in the current
   environment, label it a manual gate with the exact command and expected result.
+
+[pn]: https://github.com/jamiemitchellconsultants/Narrative
