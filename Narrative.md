@@ -26,6 +26,7 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [15](#entry-settle-the-open-mechanisms-in-the-stage-12-and-13-plans) | 2026-07-29 | Settle the open mechanisms in the Stage 12 and 13 plans | architecture | DynamoDB backs both shared stores, chosen for atomic conditional writes rather than throughput; strong reads and TTL-as-cleanup-only are correctness requirements; rate limits split between a shared counter and the edge. |
 | [16](#entry-add-binding-agent-instructions-and-teach-the-pattern-in-prompt-2) | 2026-07-30 | Add binding agent instructions and teach the pattern in Prompt 2 | product | Adopt the pattern, adapted rather than copied. `CLAUDE.md` is binding regardless of which tool reads it and is the only place rules live; the six pointers say only that it is authoritative and that instruction changes belong there. `CLAUDE. |
 | [17](#entry-make-fragments-only-a-binding-rule-in-claude-md) | 2026-07-30 | Make fragments-only a binding rule in CLAUDE.md | product | State it as a binding rule with the three cases named separately, because they fail in different ways: - **Adding an entry** — write a fragment. A hand-added index row is destroyed by the next compile, since the index is derived. |
+| [18](#entry-adopt-the-pre-merge-narrative-gate) | 2026-07-30 | Adopt the pre-merge narrative gate | product | Adopt `OntologyService`'s workflow **verbatim** rather than writing a variant, so the two cannot drift and the file can be compared by checksum across repositories. |
 
 ---
 
@@ -958,3 +959,43 @@ The conflict resolution that took a diagnosis this session is now a written rule
 The rule as written still permits the conflict to occur; it only makes the resolution unambiguous and mechanical. Any narrative pull request merging while a proposal is open will still collide on the compiled file. Removing that requires the rejected alternative above.
 
 The pointer files are unchanged. They restate none of `CLAUDE.md`'s rules by design, so a new rule in §2 needs no corresponding edit in six other places.
+
+---
+
+<a id="entry-adopt-the-pre-merge-narrative-gate"></a>
+
+## Entry 18 — 2026-07-30 — Adopt the pre-merge narrative gate
+
+*Kind: product. Status: accepted.*
+
+## Context
+
+[PR #24](https://github.com/jamiemitchellconsultants/BrightFlagProxyMCPBuilder/pull/24) carried `narrative-required` but was labelled before its body carried the three `## Narrative …` sections, and it merged inside that window. The `maintain` job failed with `A narrative-required PR must contain Narrative Context, Narrative Decision and Narrative Consequences headings`.
+
+That failure is **permanent, not retryable**. The action reads `pr.body` from the merge event payload, so correcting the body afterwards changes nothing and `gh run rerun` reads the same incomplete text. The entry had to be hand-written as a fragment in [#27](https://github.com/jamiemitchellconsultants/BrightFlagProxyMCPBuilder/pull/27), which the merge-event-only trigger makes the only available repair.
+
+Instructions alone cannot close this. `CLAUDE.md` §2 already said both the label and the sections are required — it was added in #26, before #24 merged — and the mistake still happened, because nothing checked. A rule that is only enforced by an agent remembering it is not enforced.
+
+`OntologyService` already carries the fix and has for some time: a `require-narrative-sections` job that runs on `pull_request` including `labeled` and `unlabeled`, and fails a labelled pull request whose body is missing any of the three non-empty sections. Its own inline comment states the intent exactly — a pre-merge mirror of the post-merge gate, "so a missing heading fails review instead of silently failing after merge." Four repositories in this family, including this one, had the older workflow without it.
+
+## Decision
+
+Adopt `OntologyService`'s workflow **verbatim** rather than writing a variant, so the two cannot drift and the file can be compared by checksum across repositories.
+
+The job reads the pull-request body from an environment variable rather than interpolating it into a shell command, because pull-request prose is untrusted input. It triggers on `labeled` and `unlabeled` so it re-evaluates when classification changes rather than only when commits are pushed.
+
+It deliberately does **not** check for a missing label. Only a human can decide whether a change is decision-bearing; the job catches the narrower, mechanically checkable case where classification was declared and the evidence was not supplied. That is the case that failed here.
+
+Prompt 2 gains the same requirement, so repositories built from this sequence get the gate rather than inheriting the older workflow.
+
+Also repairs two inline code spans that an earlier reflow had split across line breaks. They render correctly, but an agent grepping for the exact heading it must emit would not have found `## Narrative Context`.
+
+## Consequences
+
+The label-without-sections failure becomes a red check on an open pull request — visible and fixable — instead of a permanent loss discovered after merge.
+
+The gate does not address the other failure mode. An unlabelled decision-bearing pull request still merges silently and produces no entry, which is how four entries were lost earlier in this sequence. Closing that requires judging whether a change is decision-bearing, and no CI check can do it.
+
+Enforcement now lives in two places, the workflow and `CLAUDE.md` §2, which can disagree. The workflow is authoritative because it is the one that runs.
+
+`narrative check` passes. The `maintain` workflow is unchanged.
