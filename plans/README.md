@@ -25,6 +25,7 @@ OpenAPI document read on 2026-07-28 (114 operations, 70 schemas, byte-identical 
 | [12-multi-instance-reclassification.md](12-multi-instance-reclassification.md) † | [12](../prompts/12-multi-instance-reclassification.md) |
 | [13-aws-production-deployment.md](13-aws-production-deployment.md) † | [13](../prompts/13-aws-production-deployment.md) |
 | [14-github-runner-homelab-delivery.md](14-github-runner-homelab-delivery.md) | [14](../prompts/14-github-runner-homelab-delivery.md) |
+| [15-deploy-local-runbook.md](15-deploy-local-runbook.md) | [15](../prompts/15-deploy-local-runbook.md) |
 
 † **Contingent stages, not part of version 1.** Stage 12 runs only if corporate governance
 reclassifies this service off the low-use / low-criticality classification under which Stage 8's
@@ -37,6 +38,9 @@ Stage 14 is an optional operational extension that applies directly after Stage 
 preserves the already-published identifiers of the two contingent stages; it does not depend on or
 authorise either one.
 
+Stage 15 is an optional operational extension after Stage 14. It documents the site-specific first
+deployment and OpenCode handoff; it does not enable payment or make either contingent stage apply.
+
 Each plan follows one structure: Context, Preconditions, Scope in, Scope explicitly out, Work items,
 Tests mapped one-to-one onto the prompt's own "Prove" list, Acceptance checks with runnable
 commands, Stage boundary, and Risks. Every plan ends by naming what must **not** begin next, because
@@ -44,7 +48,7 @@ the sequence's value comes from stopping at each boundary.
 
 ## Open decisions the plans surface
 
-Six points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
+Seven points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
 position:
 
 - **The invoice-summary join window (Plan 05).** `getInvoiceSummaryList` exposes no `invoiceID`
@@ -74,3 +78,6 @@ position:
   runners on public repositories. The plan requires the server repository to become private before
   the Docker-capable `ai-mcp-server` runner can accept work, and keeps pull-request execution on
   GitHub-hosted runners.
+- **The existing edge-port boundary (Plan 15).** Caddy already owns host ports 80 and 443 for another
+  deployment. The plan keeps BrightFlag on its reviewed nginx TLS listener at 8443 and uses a
+  separate router mapping, rather than silently coupling the two services through Caddy.
