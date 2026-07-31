@@ -31,6 +31,7 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [20](#entry-warn-about-the-two-silent-traps-in-stage-10) | 2026-07-30 | Warn about the two silent traps in Stage 10 | product | **State the constraint and the failure; never the technique.** Neither addition names bash's TCP support, a proxy-side probe, or Compose's `${VARIABLE:?}` form. |
 | [21](#entry-add-github-homelab-delivery-stage) | 2026-07-31 | Add GitHub homelab delivery stage | product | Add optional Stage 14. GitHub-hosted CI builds and verifies an immutable image on protected `main`; a repository-scoped Windows runner may deploy it only after the server repository is private. |
 | [22](#entry-make-prompt-8-rollover-tests-deterministic) | 2026-07-31 | Make Prompt 8 rollover tests deterministic | product | Correct Prompt 8 and its Stage 8 plan to require two proof layers. Dedicated live-provider tests exercise actual loopback HTTP retrieval and fail-closed unavailability. |
+| [23](#entry-add-local-deployment-runbook-stage) | 2026-07-31 | Add local deployment runbook stage | product | Add optional Stage 15 after Stage 14. |
 
 ---
 
@@ -1201,3 +1202,40 @@ Future prompt replays retain real transport integration coverage without making 
 semantics depend on listener scheduling, sockets, DNS, or HTTP timeouts. A genuine warm-up failure
 will report the authentication cause directly instead of masquerading as a fetch-count defect. The
 server's production trust model and validation behavior do not change.
+
+---
+
+<a id="entry-add-local-deployment-runbook-stage"></a>
+
+## Entry 23 — 2026-07-31 — Add local deployment runbook stage
+
+*Kind: product. Status: accepted.*
+
+## Context
+
+Prompt 14 installed the private, main-only GitHub delivery path, but intentionally left `.env`, host
+secrets, public JWKS, TLS material, DNS, router state, and tenant-specific configuration outside
+GitHub. The intended host also already runs Caddy on ports 80 and 443, while the BrightFlag nginx
+proxy has a reviewed dedicated listener on 8443. A replayable prompt was needed so a future agent
+does not infer secrets, treat stale host observations as current, choose an arbitrary image digest,
+or silently couple the two edge deployments.
+
+## Decision
+
+Add optional Stage 15 after Stage 14. It requires `docs/deploy-local.md` to distinguish observed
+state, operator inputs, and expected but unrun results; preserve Caddy; use the BrightFlag proxy's
+8443 listener; select the final published manifest digest with its exact source revision; keep local
+signing material off the host; and validate a read-only endpoint before handing its URL, bearer
+header requirement, and certificate trust to OpenCode.
+
+The stage remains documentation-only. Router changes are manual, GitHub deployment cannot enable
+payment, and mutable observations must be refreshed whenever the prompt is replayed.
+
+## Consequences
+
+The first deployment now has a bounded, reviewable bridge from successful image publication to a
+callable local MCP endpoint. Operators still have to supply the BrightFlag tenant facts, service
+credential, DNS, certificate, and private caller key through channels outside Git and prompts.
+Keeping a separate 8443 listener avoids changing Caddy but means the public URL includes a port and
+the router needs a distinct mapping. Short-lived local tokens also require renewal until the
+deployment moves to the organisation's live identity provider.
