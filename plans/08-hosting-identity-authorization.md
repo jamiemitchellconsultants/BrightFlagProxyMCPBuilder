@@ -82,6 +82,19 @@ it. **Fail startup — never merely warn** — when the local provider is select
 explicitly marked non-production. That is the caller-identity analogue of Stage 3's rule rejecting a
 production profile with no authentication.
 
+Keep two kinds of evidence separate:
+
+- **Transport integration** — exercise the live provider against an actual loopback HTTP JWKS
+  endpoint, including the fail-closed result when that endpoint is unavailable.
+- **Cache and rollover semantics** — put a deterministic, mutable, in-process key source beneath
+  the production cache and validator. These tests cover lifetime, forced refresh, rollover, refresh
+  rate-limiting, and refresh failure without a listener, DNS, sockets, HTTP timeouts, or scheduler
+  timing.
+
+Every cache warm-up retains its validation result and proves authentication succeeded before a
+fetch-count assertion. Discarding that result would let a transport failure surface later as the
+misleading claim that the cache fetched the wrong number of times.
+
 ### 4. Dev token-issuing tool
 
 Built the same way as Stage 3's fake server. Given a requested caller identity (subject, tenant,
@@ -148,6 +161,12 @@ BrightFlag response content treated as untrusted data, never as instruction.
 - unauthenticated, expired, wrong-audience, wrong-issuer, and `none`-algorithm tokens refused;
 - a live-provider token and a local-provider token with **identical claims** produce **identical**
   authorization outcomes;
+- the live provider retrieves JWKS through a loopback HTTP endpoint, and an unavailable endpoint
+  fails closed;
+- deterministic in-process rollover tests prove one bounded refresh for a newly rolled key, one
+  refresh rather than one per token during a burst, no refresh for non-key failures, and
+  preservation of the original refusal when refresh fails;
+- every cache warm-up proves authentication succeeded before fetch counts are asserted;
 - startup fails when the local provider is selected under a production profile;
 - the dev token tool refuses to run under a production profile and is absent from the image;
 - a dev-minted token with wrong issuer, wrong audience, missing claim, or expired lifetime is
@@ -204,6 +223,10 @@ Do not push unless requested. **Do not begin Stage 9.**
   hand-rolled parser in the test.
 - "Identical claims produce identical outcomes" is the test that proves the two providers share one
   code path. Write it as a parameterised test over both providers, not two separate tests.
+- Do not make cache and rollover tests depend on the live provider's loopback listener. A transient
+  ten-second HTTP timeout can return a fail-closed authentication result and leave the successful
+  fetch count at zero; if the warm-up result is discarded, the later count assertion reports the
+  wrong cause. Keep actual HTTP retrieval in the dedicated live-provider integration tests.
 - Single instance is only safe while it is enforced. The failure mode is a deployment that scales to
   two replicas because the transport is stateless and nothing stopped it, at which point a plan
   issued by one instance is invisible to the other and the already-paid check silently narrows to

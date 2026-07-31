@@ -51,6 +51,17 @@ validation defined above; neither weakens it and neither introduces a second cod
 validation. The local provider changes only the source of trusted keys and the accepted issuer, per
 the caching rule already stated.
 
+Separate transport integration evidence from signing-key cache and rollover semantics. Dedicated
+live-provider integration tests must exercise actual JWKS retrieval through a loopback HTTP endpoint
+and prove that an unreachable endpoint fails closed. Tests of cache lifetime, forced refresh, key
+rollover, refresh rate-limiting, and refresh failure must instead put a deterministic, mutable,
+in-process key source underneath the production cache and validator. Those semantic tests must not
+start a listener or depend on DNS, sockets, HTTP timeouts, or scheduler timing.
+
+Whenever a test warms the signing-key cache, retain the validation result and assert that the caller
+authenticated before asserting fetch counts. Never discard the result and let a fetch-count
+assertion hide a trust-root transport failure.
+
 Fail startup — never merely warn — when the local trust provider is selected under a deployment
 profile not explicitly marked non-production. This is the caller-identity analogue of the
 BrightFlag-origin rule in Prompt 3 that rejects a production profile using no authentication.
@@ -110,6 +121,12 @@ Prove:
 - unauthenticated, expired, wrong-audience, wrong-issuer, and `none`-algorithm tokens are refused;
 - a token from the live trust provider and a token from the local trust provider carrying identical
   claims produce identical authorization outcomes;
+- the live provider retrieves JWKS through a loopback HTTP integration endpoint, and an unavailable
+  endpoint fails closed;
+- deterministic in-process rollover tests prove that a newly rolled key triggers one bounded
+  refresh, a burst of unverifiable tokens cannot cause one fetch per token, non-key failures do not
+  refresh, and a failed refresh leaves the original refusal standing;
+- every signing-key cache warm-up proves authentication succeeded before asserting fetch counts;
 - startup fails when the local trust provider is selected under a profile marked production;
 - the dev token-issuing tool refuses to run under a profile marked production and is absent from
   the container image;
@@ -138,6 +155,8 @@ Prove:
 - The plan store's single-instance topology is stated and enforced, not left implicit.
 - The caller-identity trust root is swappable by configuration alone; no authentication code path
   differs between the live and local trust providers.
+- Live-provider transport tests are separate from deterministic cache and rollover tests, so a
+  transient loopback listener failure cannot appear as a cache-fetch assertion.
 - A profile marked production cannot select the local trust provider, and the dev token-issuing
   tool cannot run under one or ship in the container image.
 - Formatting, build, and tests succeed.
