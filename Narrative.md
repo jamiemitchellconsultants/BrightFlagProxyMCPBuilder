@@ -30,6 +30,7 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [19](#entry-record-that-the-roughness-is-deliberate) | 2026-07-30 | Record that the roughness is deliberate | product | **Record the policy, not the list.** `DESIGN-CALLS.md` §4 states that deliberate roughness exists and that a discrepancy a reader has found may be one instance of it. |
 | [20](#entry-warn-about-the-two-silent-traps-in-stage-10) | 2026-07-30 | Warn about the two silent traps in Stage 10 | product | **State the constraint and the failure; never the technique.** Neither addition names bash's TCP support, a proxy-side probe, or Compose's `${VARIABLE:?}` form. |
 | [21](#entry-add-github-homelab-delivery-stage) | 2026-07-31 | Add GitHub homelab delivery stage | product | Add optional Stage 14. GitHub-hosted CI builds and verifies an immutable image on protected `main`; a repository-scoped Windows runner may deploy it only after the server repository is private. |
+| [22](#entry-make-prompt-8-rollover-tests-deterministic) | 2026-07-31 | Make Prompt 8 rollover tests deterministic | product | Correct Prompt 8 and its Stage 8 plan to require two proof layers. Dedicated live-provider tests exercise actual loopback HTTP retrieval and fail-closed unavailability. |
 
 ---
 
@@ -1169,3 +1170,34 @@ Docker access remains privileged even under a dedicated runner account. Host sec
 GitHub and the Actions workspace, payment cannot be enabled by the workflow, and turning off the
 router forward provides isolation without replacing JWT or capability checks. Stages 12 and 13
 remain contingent and are neither required nor authorized by this stage.
+
+---
+
+<a id="entry-make-prompt-8-rollover-tests-deterministic"></a>
+
+## Entry 22 — 2026-07-31 — Make Prompt 8 rollover tests deterministic
+
+*Kind: product. Status: accepted.*
+
+## Context
+
+Prompt 8 required live and local JWKS providers plus bounded signing-key caching, but did not separate
+transport integration evidence from rollover and cache semantics. The resulting server used a
+loopback HTTP endpoint inside rollover tests. A transient timeout returned
+`TrustRootUnavailable`; because the warm-up result was discarded, CI reported only that the
+successful fetch count was zero.
+
+## Decision
+
+Correct Prompt 8 and its Stage 8 plan to require two proof layers. Dedicated live-provider tests
+exercise actual loopback HTTP retrieval and fail-closed unavailability. Cache lifetime, forced
+refresh, rollover, rate-limiting, and refresh-failure tests use a deterministic mutable in-process
+key source underneath the production cache and validator. Every cache warm-up must prove
+authentication succeeded before fetch counts are asserted.
+
+## Consequences
+
+Future prompt replays retain real transport integration coverage without making cache and rollover
+semantics depend on listener scheduling, sockets, DNS, or HTTP timeouts. A genuine warm-up failure
+will report the authentication cause directly instead of masquerading as a fetch-count defect. The
+server's production trust model and validation behavior do not change.
