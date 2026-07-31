@@ -29,6 +29,7 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [18](#entry-adopt-the-pre-merge-narrative-gate) | 2026-07-30 | Adopt the pre-merge narrative gate | product | Adopt `OntologyService`'s workflow **verbatim** rather than writing a variant, so the two cannot drift and the file can be compared by checksum across repositories. |
 | [19](#entry-record-that-the-roughness-is-deliberate) | 2026-07-30 | Record that the roughness is deliberate | product | **Record the policy, not the list.** `DESIGN-CALLS.md` §4 states that deliberate roughness exists and that a discrepancy a reader has found may be one instance of it. |
 | [20](#entry-warn-about-the-two-silent-traps-in-stage-10) | 2026-07-30 | Warn about the two silent traps in Stage 10 | product | **State the constraint and the failure; never the technique.** Neither addition names bash's TCP support, a proxy-side probe, or Compose's `${VARIABLE:?}` form. |
+| [21](#entry-add-github-homelab-delivery-stage) | 2026-07-31 | Add GitHub homelab delivery stage | product | Add optional Stage 14. GitHub-hosted CI builds and verifies an immutable image on protected `main`; a repository-scoped Windows runner may deploy it only after the server repository is private. |
 
 ---
 
@@ -1139,3 +1140,32 @@ accurately.
 
 Stage 11's audit reads the prompts against the implementation. Both warnings describe properties the
 implementation already has, so they narrow what that audit can find rather than widening it.
+
+---
+
+<a id="entry-add-github-homelab-delivery-stage"></a>
+
+## Entry 21 — 2026-07-31 — Add GitHub homelab delivery stage
+
+*Kind: product. Status: accepted.*
+
+## Context
+
+The existing homelab stage required manual image delivery and prohibited router forwarding. A
+reviewed image now needs to reach `ai-mcp-server` through GitHub without allowing public-repository
+pull-request code to control a persistent runner with Docker and secret-bearing container access.
+
+## Decision
+
+Add optional Stage 14. GitHub-hosted CI builds and verifies an immutable image on protected
+`main`; a repository-scoped Windows runner may deploy it only after the server repository is
+private. Where private-repository environment reviewers are unavailable, deployment is a separate
+main-only manual dispatch. The runner executes only a reviewed host-installed script. Router
+forwarding is an explicit TLS-only reachability mode and is never treated as authorization.
+
+## Consequences
+
+Docker access remains privileged even under a dedicated runner account. Host secrets stay outside
+GitHub and the Actions workspace, payment cannot be enabled by the workflow, and turning off the
+router forward provides isolation without replacing JWT or capability checks. Stages 12 and 13
+remain contingent and are neither required nor authorized by this stage.
