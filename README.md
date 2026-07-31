@@ -45,6 +45,15 @@ implementation prompt at a time only after the previous prompt passes its accept
 11. [Generate a homelab and local-network deployment guide](prompts/10-homelab-local-network-deployment.md)
 12. [Run an independent reconstruction audit](prompts/11-independent-reconstruction-audit.md)
 
+Optional operational extension, numbered after the prepared contingent stages so their existing
+references do not move:
+
+- [Deliver reviewed images to the homelab with GitHub Actions](prompts/14-github-runner-homelab-delivery.md)
+
+Prompt 14 applies after Prompt 11 and does not depend on contingent Prompts 12 or 13. It permits an
+explicit router-forwarded homelab mode and adds a self-hosted deployment runner, but refuses to attach
+that Docker-capable runner while the server repository is public.
+
 Do not paste every prompt into one message. Each stage introduces one bounded capability and asks
 for executable evidence before the next begins.
 

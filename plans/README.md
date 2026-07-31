@@ -24,6 +24,7 @@ OpenAPI document read on 2026-07-28 (114 operations, 70 schemas, byte-identical 
 | [11-reconstruction-audit.md](11-reconstruction-audit.md) | [11](../prompts/11-independent-reconstruction-audit.md) |
 | [12-multi-instance-reclassification.md](12-multi-instance-reclassification.md) † | [12](../prompts/12-multi-instance-reclassification.md) |
 | [13-aws-production-deployment.md](13-aws-production-deployment.md) † | [13](../prompts/13-aws-production-deployment.md) |
+| [14-github-runner-homelab-delivery.md](14-github-runner-homelab-delivery.md) | [14](../prompts/14-github-runner-homelab-delivery.md) |
 
 † **Contingent stages, not part of version 1.** Stage 12 runs only if corporate governance
 reclassifies this service off the low-use / low-criticality classification under which Stage 8's
@@ -32,6 +33,10 @@ before Stage 12 lands is the specific defect Stage 12 exists to prevent. Both ar
 so the transformation is a prepared sequence rather than an improvisation, and neither is to be
 implemented speculatively.
 
+Stage 14 is an optional operational extension that applies directly after Stage 11. Its number
+preserves the already-published identifiers of the two contingent stages; it does not depend on or
+authorise either one.
+
 Each plan follows one structure: Context, Preconditions, Scope in, Scope explicitly out, Work items,
 Tests mapped one-to-one onto the prompt's own "Prove" list, Acceptance checks with runnable
 commands, Stage boundary, and Risks. Every plan ends by naming what must **not** begin next, because
@@ -39,7 +44,7 @@ the sequence's value comes from stopping at each boundary.
 
 ## Open decisions the plans surface
 
-Five points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
+Six points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
 position:
 
 - **The invoice-summary join window (Plan 05).** `getInvoiceSummaryList` exposes no `invoiceID`
@@ -65,3 +70,7 @@ position:
   Anything not executable while authoring on another host is written as a labelled manual gate with
   an exact command and expected result, per the prompt's own escape clause — never reported as
   passing.
+- **The public-repository runner boundary (Plan 14).** GitHub warns against persistent self-hosted
+  runners on public repositories. The plan requires the server repository to become private before
+  the Docker-capable `ai-mcp-server` runner can accept work, and keeps pull-request execution on
+  GitHub-hosted runners.
