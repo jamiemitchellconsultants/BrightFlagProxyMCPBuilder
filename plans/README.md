@@ -26,6 +26,13 @@ OpenAPI document read on 2026-07-28 (114 operations, 70 schemas, byte-identical 
 | [13-aws-production-deployment.md](13-aws-production-deployment.md) † | [13](../prompts/13-aws-production-deployment.md) |
 | [14-github-runner-homelab-delivery.md](14-github-runner-homelab-delivery.md) | [14](../prompts/14-github-runner-homelab-delivery.md) |
 | [15-deploy-local-runbook.md](15-deploy-local-runbook.md) | [15](../prompts/15-deploy-local-runbook.md) |
+| [16 — retire runner local deployment][plan-16] | [16][prompt-16] |
+| [17 — shared local deployment][plan-17] | [17][prompt-17] |
+
+[plan-16]: 16-retire-github-runner-local-deployment.md
+[prompt-16]: ../prompts/16-retire-github-runner-local-deployment.md
+[plan-17]: 17-local-pull-localstack-keycloak-caddy-deployment.md
+[prompt-17]: ../prompts/17-local-pull-localstack-keycloak-caddy-deployment.md
 
 † **Contingent stages, not part of version 1.** Stage 12 runs only if corporate governance
 reclassifies this service off the low-use / low-criticality classification under which Stage 8's
@@ -34,12 +41,11 @@ before Stage 12 lands is the specific defect Stage 12 exists to prevent. Both ar
 so the transformation is a prepared sequence rather than an improvisation, and neither is to be
 implemented speculatively.
 
-Stage 14 is an optional operational extension that applies directly after Stage 11. Its number
-preserves the already-published identifiers of the two contingent stages; it does not depend on or
-authorise either one.
-
-Stage 15 is an optional operational extension after Stage 14. It documents the site-specific first
-deployment and OpenCode handoff; it does not enable payment or make either contingent stage apply.
+Stages 14 and 15 are superseded. Stage 16 is a corrective stage only for implementations where
+either was applied; it removes the self-hosted runner path while preserving verified GHCR
+publication. Stage 17 then adds the replacement host-pull deployment. A fresh implementation skips
+Stages 14–16 and applies Stage 17 directly after Stage 11. None of these stages enables payment or
+makes a contingent stage apply.
 
 Each plan follows one structure: Context, Preconditions, Scope in, Scope explicitly out, Work items,
 Tests mapped one-to-one onto the prompt's own "Prove" list, Acceptance checks with runnable
@@ -48,7 +54,7 @@ the sequence's value comes from stopping at each boundary.
 
 ## Open decisions the plans surface
 
-Seven points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
+Nine points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
 position:
 
 - **The invoice-summary join window (Plan 05).** `getInvoiceSummaryList` exposes no `invoiceID`
@@ -81,3 +87,12 @@ position:
 - **The existing edge-port boundary (Plan 15).** Caddy already owns host ports 80 and 443 for another
   deployment. The plan keeps BrightFlag on its reviewed nginx TLS listener at 8443 and uses a
   separate router mapping, rather than silently coupling the two services through Caddy.
+- **The runner-retirement boundary (Plan 16).** Removing repository automation is safe to automate;
+  deleting a Windows account, runner service, directory, GitHub environment, or credential is not.
+  The plan makes those inventory-first manual gates and explicitly preserves Jamie's long-lived SSH
+  access.
+- **The replacement shared-infrastructure boundary (Plan 17).** The server remains vendor-neutral:
+  the host materialises LocalStack Secrets Manager values into protected files, Keycloak supplies
+  tokens from one canonical HTTPS issuer, and BrightFlag owns one LAN-only Caddy fragment rather
+  than the shared stacks. Real-secret deployment is blocked while unauthenticated LocalStack is
+  reachable from the LAN.

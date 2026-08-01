@@ -49,15 +49,21 @@ Optional operational extension, numbered after the prepared contingent stages so
 references do not move:
 
 - [Deliver reviewed images to the homelab with GitHub Actions](prompts/14-github-runner-homelab-delivery.md)
-- [Prepare the local deployment runbook](prompts/15-deploy-local-runbook.md)
+  (superseded)
+- [Prepare the local deployment runbook](prompts/15-deploy-local-runbook.md) (superseded)
+- [Retire the GitHub runner local-deployment
+  path](prompts/16-retire-github-runner-local-deployment.md)
+- [Pull and deploy locally with LocalStack, Keycloak, and shared
+  Caddy](prompts/17-local-pull-localstack-keycloak-caddy-deployment.md)
 
-Prompt 14 applies after Prompt 11 and does not depend on contingent Prompts 12 or 13. It permits an
-explicit router-forwarded homelab mode and adds a self-hosted deployment runner, but refuses to attach
-that Docker-capable runner while the server repository is public.
+Prompts 14 and 15 describe the superseded self-hosted-runner and dedicated-nginx deployment. Do not
+apply them to a fresh implementation. If they were already applied, run Prompt 16 to remove that
+path and then Prompt 17 to introduce the replacement.
 
-Prompt 15 applies after Prompt 14. It turns the partially bootstrapped `ai-mcp-server` host into an
-operator-ready, authenticated read-only endpoint without storing tenant secrets in the repository,
-changing the existing Caddy deployment, or enabling payment.
+Prompt 17 applies directly after Prompt 11 on a fresh implementation. It keeps verified GHCR image
+publication on GitHub-hosted runners, but a script on `ai-mcp-server` pulls and deploys the digest.
+It consumes existing LocalStack Secrets Manager, Keycloak, and shared Caddy infrastructure without
+owning those stacks or enabling payment.
 
 Do not paste every prompt into one message. Each stage introduces one bounded capability and asks
 for executable evidence before the next begins.
