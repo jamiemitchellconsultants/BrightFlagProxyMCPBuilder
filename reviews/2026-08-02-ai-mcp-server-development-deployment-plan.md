@@ -1,6 +1,6 @@
 # Adversarial review plan — `ai-mcp-server` development deployment
 
-Status: proposed; revised after adversarial reviews; not yet approved for implementation.
+Status: approved and frozen for implementation. Any revision requires a new reviewed decision.
 
 Date: 2026-08-02
 

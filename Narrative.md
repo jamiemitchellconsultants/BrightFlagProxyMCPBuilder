@@ -34,7 +34,8 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [23](#entry-add-local-deployment-runbook-stage) | 2026-07-31 | Add local deployment runbook stage | product | Add optional Stage 15 after Stage 14. |
 | [24](#entry-replace-runner-deployment-with-local-pull) | 2026-08-01 | Replace runner deployment with local pull | product | Retire every GitHub-triggered local deployment and retain only GitHub-hosted CI and verified, digest-pinned GHCR publication. Deploy through a local PowerShell entry point that accepts an exact digest and revision. |
 | [25](#entry-address-ai-mcp-server-adversarial-review) | 2026-08-02 | Address ai-mcp-server adversarial review | product | Revise the proposed plan to require flat Keycloak `tid` and `roles` claims, container-to-issuer host-gateway routing, later retirement of the Prompt 17 server-local deployment artifacts, deterministic Git-ref build state, and correctly… |
-| [26](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial reviews. |
+| [26](#entry-approve-and-freeze-ai-mcp-server-development-deployment-plan) | 2026-08-02 | Approve and freeze the ai-mcp-server development deployment plan | architecture | Approve the adversarially reviewed plan as the frozen implementation baseline for Builder Stages 18 and 19 and the LocalAI Windows deployment owner. |
+| [27](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial reviews. |
 
 ---
 
@@ -1303,9 +1304,50 @@ Keycloak is now specified as a functioning initial authentication option. The pl
 
 ---
 
+<a id="entry-approve-and-freeze-ai-mcp-server-development-deployment-plan"></a>
+
+## Entry 26 — 2026-08-02 — Approve and freeze the ai-mcp-server development deployment plan
+
+*Kind: architecture. Status: accepted.*
+
+## Context
+
+The proposed `ai-mcp-server` development deployment plan was revised after two adversarial reviews.
+It now states the cross-repository ownership boundaries, the exclusive fixed-token or Keycloak
+authentication contract, the plaintext home-lab transport, the exact-commit build and rollback
+model, the LocalStack secret consequences, and the separate verification classes explicitly.
+
+Implementation remained blocked because the reviewed artifact still said that it was proposed and
+not approved. The approval was requested as a one-off direct commit to `main`, so no pull request
+merge event will exist for Project Narrative to turn into a follow-up fragment.
+
+## Decision
+
+Approve the reviewed plan and freeze it as the implementation baseline. Builder Stages 18 and 19
+and the LocalAI Windows deployment owner may now be created within the plan's stated repository
+boundaries. Implementation must not revise the frozen plan to accommodate a discovered problem; a
+required revision must stop implementation and be made through a new reviewed decision.
+
+For this approval only, commit directly to `main`. Record the decision with this hand-written
+fragment and compile the generated `Narrative.md`, because the normal labelled pull-request
+workflow will not run.
+
+## Consequences
+
+Implementation may begin against the frozen requirements and verification plan. Existing prompts
+remain historical, and changes to `BrightFlagProxyMCPServer` still arrive only through the future
+Builder prompts rather than direct edits during this work. The deferred issues remain non-blocking
+and do not weaken the plan's stated limitations.
+
+Any later change to the approved plan requires its own review and decision record. The direct-main
+exception applies only to this approval and does not replace the repository's normal branch,
+pull-request, label, or narrative workflow for implementation changes.
+
+---
+
 <a id="entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review"></a>
 
-## Entry 26 — 2026-08-02 — Prepare the ai-mcp-server development deployment for adversarial review
+## Entry 27 — 2026-08-02 — Prepare the ai-mcp-server development deployment for adversarial review
 
 *Kind: architecture. Status: proposed.*
 
