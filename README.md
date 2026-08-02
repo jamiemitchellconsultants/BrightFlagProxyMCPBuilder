@@ -56,8 +56,11 @@ references do not move:
 - [Pull and deploy locally with LocalStack, Keycloak, and shared
   Caddy](prompts/17-local-pull-localstack-keycloak-caddy-deployment.md)
 - [Add home-lab fixed-token authentication](prompts/18-home-lab-fixed-token-authentication.md)
+  (superseded)
 - [Deploy the development server on
   `ai-mcp-server`](prompts/19-ai-mcp-server-development-deployment.md)
+- [One shared home-lab audience, and an OAuth flow a conversational agent can
+  complete](prompts/20-keycloak-shared-audience-mcp-oauth.md)
 
 Prompts 14 and 15 describe the superseded self-hosted-runner and dedicated-nginx deployment. Do not
 apply them to a fresh implementation. If they were already applied, run Prompt 16 to remove that
@@ -77,6 +80,14 @@ enables payment against BrightFlag's integration-test environment. They override
 home-lab decisions listed in Prompt 19's supersession table; every other Prompt 17 requirement
 stands, and Prompt 17's own text is not rewritten. Nothing in either stage describes a production
 deployment or a production authentication strategy.
+
+Prompt 20 supersedes Prompt 18 and revises the deployment posture Prompt 19 describes. The home
+lab's callers turned out to be tier-1 conversational agents, which cannot be handed a fixed bearer
+token in a configuration file and which insist on running the OAuth flow themselves — so the fixed
+token is retired unapplied, the audience becomes one value shared by every MCP server in the lab,
+and the endpoint moves to public HTTPS behind the shared Caddy. Apply it after Prompt 19. Prompt 18
+should not be applied at all; if it already was, leave it in place unselected rather than unpicking
+it.
 
 Do not paste every prompt into one message. Each stage introduces one bounded capability and asks
 for executable evidence before the next begins.
