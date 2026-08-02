@@ -32,7 +32,8 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [21](#entry-add-github-homelab-delivery-stage) | 2026-07-31 | Add GitHub homelab delivery stage | product | Add optional Stage 14. GitHub-hosted CI builds and verifies an immutable image on protected `main`; a repository-scoped Windows runner may deploy it only after the server repository is private. |
 | [22](#entry-make-prompt-8-rollover-tests-deterministic) | 2026-07-31 | Make Prompt 8 rollover tests deterministic | product | Correct Prompt 8 and its Stage 8 plan to require two proof layers. Dedicated live-provider tests exercise actual loopback HTTP retrieval and fail-closed unavailability. |
 | [23](#entry-add-local-deployment-runbook-stage) | 2026-07-31 | Add local deployment runbook stage | product | Add optional Stage 15 after Stage 14. |
-| [24](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial reviews. |
+| [24](#entry-replace-runner-deployment-with-local-pull) | 2026-08-01 | Replace runner deployment with local pull | product | Retire every GitHub-triggered local deployment and retain only GitHub-hosted CI and verified, digest-pinned GHCR publication. Deploy through a local PowerShell entry point that accepts an exact digest and revision. |
+| [25](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial reviews. |
 
 ---
 
@@ -1243,9 +1244,47 @@ deployment moves to the organisation's live identity provider.
 
 ---
 
+<a id="entry-replace-runner-deployment-with-local-pull"></a>
+
+## Entry 24 — 2026-08-01 — Replace runner deployment with local pull
+
+*Kind: product. Status: accepted.*
+
+## Context
+
+The prior local-deployment stages placed a persistent Docker-capable GitHub Actions runner on
+`ai-mcp-server` and kept BrightFlag behind a dedicated nginx listener. The destination host now
+has shared LocalStack Secrets Manager, Keycloak, and Caddy infrastructure, and deployment should be
+initiated by a trusted operator on the local machine. LocalStack is currently unauthenticated, so
+real BrightFlag credentials must not be stored while its endpoint is reachable from another LAN
+machine. The replacement must also preserve Jamie's long-lived SSH access and the server's existing
+vendor-neutral secret-provider boundary.
+
+## Decision
+
+Retire every GitHub-triggered local deployment and retain only GitHub-hosted CI and verified,
+digest-pinned GHCR publication. Deploy through a local PowerShell entry point that accepts an exact
+digest and revision. The host retrieves configured LocalStack Secrets Manager values over loopback
+and atomically materialises ACL-protected files for the existing File providers; the server does not
+gain an AWS SDK or vendor-specific provider. Keycloak is the canonical live token issuer, the server
+publishes OAuth Protected Resource Metadata, and Caddy owns TLS termination through one
+BrightFlag-owned, LAN-only fragment on the shared edge network. Payment remains disabled.
+
+## Consequences
+
+Fresh implementations skip superseded Stages 14–16 and apply Stage 17 after Stage 11; repositories
+that already applied Stages 14 or 15 run Stage 16 before Stage 17. The GitHub runner, environment,
+and runner-only host assets require an inventory-first manual retirement, while Jamie's SSH access
+and unrelated services are preserved. Real-secret deployment fails closed until LocalStack is
+unreachable from the LAN. BrightFlag no longer owns an nginx listener or router-specific isolation;
+its Caddy route becomes the service-specific cut-off, and shared Caddy, Keycloak, LocalStack,
+PostgreSQL, and `edge_net` remain externally owned infrastructure.
+
+---
+
 <a id="entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review"></a>
 
-## Entry 24 — 2026-08-02 — Prepare the ai-mcp-server development deployment for adversarial review
+## Entry 25 — 2026-08-02 — Prepare the ai-mcp-server development deployment for adversarial review
 
 *Kind: architecture. Status: proposed.*
 
