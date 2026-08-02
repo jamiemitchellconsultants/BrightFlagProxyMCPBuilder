@@ -4,6 +4,15 @@ Status: approved and frozen for implementation. Any revision requires a new revi
 
 Date: 2026-08-02
 
+Revised 2026-08-02, on operator instruction: the host's installed PowerShell version is recorded as
+a settled requirement. This does not change any decision the review took; it removes an assumption
+implementation had otherwise been left to make.
+
+Revised 2026-08-02, on operator instruction after implementation review: Stage 18 preserves the
+dedicated Prompt 17 Keycloak realm and client contract; Stage 19 alone moves the deployment to the
+shared `homelab` realm and `mcp-client`. The deployment must also receive the reviewed
+integration-test invoice status explicitly, with no guessed default.
+
 ## Purpose
 
 This plan adds later prompts to `BrightFlagProxyMCPBuilder` and direct host-deployment support to
@@ -23,6 +32,14 @@ strategy. The application will not enforce that distinction with a production-pr
 - Prompt 17 is merged and applied before Stages 18 and 19; the later stages replace conflicting
   implemented home-lab behavior rather than revising Prompt 17 history.
 - The target is the Windows host `ai-mcp-server`, running Linux containers through Docker Desktop.
+- `ai-mcp-server` runs PowerShell 7.6.4. Scripts written for this deployment may assume PowerShell
+  7.6 or later and must declare it. Windows PowerShell 5.1 compatibility is not a requirement, and
+  writing to the 5.1 subset in order to obtain it is a defect rather than caution, because it costs
+  the 7.x-only constructs the scripts should use. A script whose control flow depends on inspecting
+  `$LASTEXITCODE` after a native command must set `$PSNativeCommandUseErrorActionPreference`
+  explicitly rather than inherit it: when that preference is true, a non-zero exit throws under
+  `$ErrorActionPreference = "Stop"` before any `$LASTEXITCODE` check runs, and its default has
+  moved between 7.x releases. It is `False` on 7.6.4, verified on that version.
 - The canonical endpoint is `http://brightflag-mcp.tqaentry.com/mcp`.
 - Caddy configures a private-source matcher for the BrightFlag route. Its effectiveness through
   Docker Desktop and router forwarding is unproven and tracked by issue [#45][issue-45].
@@ -96,8 +113,9 @@ Prompt 18 adds a fixed opaque bearer-token provider without removing Keycloak. I
 - retained Keycloak issuer, audience, signature, lifetime, role, and scope validation;
 - both `brightflag.read` and `brightflag.payment` for the designated Keycloak development user;
 - rejection of tokens whose audience lacks `brightflag-mcp` or whose flat `roles` claim lacks the
-  required BrightFlag roles; with the shared `mcp-client`, roles are the service boundary because
-  its audience mapper can also add `brightflag-mcp` to tokens for another MCP service;
+  required BrightFlag roles;
+- preservation of Prompt 17's dedicated `brightflag-mcp` realm and pre-registered public-client
+  contract; the move to the shared `homelab` realm and `mcp-client` belongs to Prompt 19;
 - no environment or profile restriction on selecting fixed-token mode; and
 - no automatic hardening or production-suitability check for this explicitly selected shortcut.
 
@@ -157,6 +175,8 @@ Prompt 19 requires:
   can discover and fetch HTTPS Keycloak JWKS without modifying the shared Caddy host deployment;
 - full payment configuration, including a named `BrightFlag__Authorization__MarkInvoicePaidRoles__0`
   value alongside the corresponding read role;
+- a required operator-supplied BrightFlag integration-test approved-invoice status, with no default
+  or guessed status value;
 - retirement by the future Prompt 19 application of `deploy/local/compose.yaml`, its Caddy
   template, `manual-gates.md`, every `deploy/local/scripts/` deployment script, and
   `docs/deploy-local.md`; the prompt replaces them with the LocalAI-owned deployment and marks any
@@ -199,7 +219,8 @@ Add `LocalAI/docs/setup-brightflag-mcp-windows.ps1`, modelled on
 The script will:
 
 1. Accept repository URL, Git ref, work directory, auth mode, Keycloak user, canonical hostname,
-   and LocalStack secret identifiers.
+   the reviewed BrightFlag integration-test approved-invoice status, and LocalStack secret
+   identifiers. The status is required and has no default.
 2. Require Git for Windows and the AWS CLI in preflight.
 3. Resolve the supplied Git ref once to a full 40-character commit using `git ls-remote` with
    `GIT_ASKPASS`, a credential helper, or an equivalent mechanism that keeps the credential out of
@@ -315,8 +336,10 @@ Keycloak client separation, and secret-lifecycle hardening are deferred to those
 
 ### LocalAI checks
 
-- PowerShell parses successfully;
+- PowerShell parses successfully under 7.6 or later, and the script declares that minimum;
 - generated Compose contains no unresolved placeholders or secret values;
+- generated Compose contains the explicitly supplied reviewed approved-invoice status, and the
+  deployment script has no default for that value;
 - generated Compose declares one BrightFlag container, no published backend port, `mcp-public`, the
   expected healthcheck, the permitted host set, and the `auth.tqaentry.com:host-gateway` mapping;
 - generated Compose deliberately omits the listed Prompt 17 container hardening and resource-limit

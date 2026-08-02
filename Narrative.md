@@ -35,7 +35,8 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [24](#entry-replace-runner-deployment-with-local-pull) | 2026-08-01 | Replace runner deployment with local pull | product | Retire every GitHub-triggered local deployment and retain only GitHub-hosted CI and verified, digest-pinned GHCR publication. Deploy through a local PowerShell entry point that accepts an exact digest and revision. |
 | [25](#entry-address-ai-mcp-server-adversarial-review) | 2026-08-02 | Address ai-mcp-server adversarial review | product | Revise the proposed plan to require flat Keycloak `tid` and `roles` claims, container-to-issuer host-gateway routing, later retirement of the Prompt 17 server-local deployment artifacts, deterministic Git-ref build state, and correctly… |
 | [26](#entry-approve-and-freeze-ai-mcp-server-development-deployment-plan) | 2026-08-02 | Approve and freeze the ai-mcp-server development deployment plan | architecture | Approve the adversarially reviewed plan as the frozen implementation baseline for Builder Stages 18 and 19 and the LocalAI Windows deployment owner. |
-| [27](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial reviews. |
+| [27](#entry-correct-ai-mcp-server-implementation-review-findings) | 2026-08-02 | Correct ai-mcp-server implementation review findings | correction | Correct Stage 18/19 sequencing and require the reviewed integration-test invoice status explicitly after implementation review; track the remaining Keycloak work in LocalAI issue #28. |
+| [28](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial reviews. |
 
 ---
 
@@ -1345,9 +1346,56 @@ pull-request, label, or narrative workflow for implementation changes.
 
 ---
 
+<a id="entry-correct-ai-mcp-server-implementation-review-findings"></a>
+
+## Entry 27 — 2026-08-02 — Correct ai-mcp-server implementation review findings
+
+*Kind: correction. Status: accepted.*
+
+## Context
+
+Implementation review compared the frozen deployment plan and its generated Stage 18 and 19
+artifacts with the pending LocalAI Windows deployment. It found that Stage 18 had prematurely
+adopted Stage 19's shared Keycloak topology and that LocalAI had guessed a customer-specific
+approved-invoice status. It also found command-argument credential exposure, optional Caddy
+activation, false-success stop and removal paths, and incomplete Keycloak desired-state handling.
+
+The frozen-plan decision required a later correction to receive its own review and decision record.
+The operator directed that sequencing and status defects be corrected plan-first, selected three
+implementation defects for direct correction, accepted or skipped the home-lab operational risks,
+and grouped the remaining Keycloak work into a dedicated follow-up issue.
+
+## Decision
+
+Revise the reviewed plan so Stage 18 preserves Prompt 17's dedicated `brightflag-mcp` realm and
+public-client contract, while Stage 19 alone moves deployment to the shared `homelab` realm and
+`mcp-client`. Require the reviewed integration-test tenant's approved-invoice status as an explicit
+deployment input with no guessed default, and regenerate the affected prompts and plans from those
+corrections.
+
+In LocalAI, remove the GitHub token command parameter, make Caddy validation and reload deployment
+conditions, and make stop and removal fail rather than report success after native-command errors.
+Track complete fail-closed Keycloak setup, exact mapper verification, and auth-independent fixed
+token materialisation together in LocalAI issue #28. Preserve all twelve implementation-review
+findings and their dispositions in a separate review artifact.
+
+## Consequences
+
+Stage 18 can now be applied directly to the Prompt 17 baseline without depending on a later host
+topology, and Stage 19 receives the customer-specific status it needs without inventing vocabulary.
+The LocalAI script no longer offers a GitHub credential through process arguments and does not
+claim Caddy, stop, or removal success when the underlying operation failed.
+
+The dedicated Keycloak correction remains explicit follow-up work rather than a partially applied
+change. Saving the review records the accepted home-lab risks, the deliberately skipped
+production-origin check, and the still-open impossible token-claim manual gate without describing
+any of them as fixed.
+
+---
+
 <a id="entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review"></a>
 
-## Entry 27 — 2026-08-02 — Prepare the ai-mcp-server development deployment for adversarial review
+## Entry 28 — 2026-08-02 — Prepare the ai-mcp-server development deployment for adversarial review
 
 *Kind: architecture. Status: proposed.*
 
