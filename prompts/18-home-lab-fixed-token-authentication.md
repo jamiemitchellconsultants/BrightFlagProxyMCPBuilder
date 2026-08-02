@@ -16,8 +16,8 @@ BrightFlag service credential, which is a separate contract that no caller ever 
 Extend the caller-identity configuration with an authentication mode chosen once, at startup, from
 reviewed configuration. Exactly two modes exist:
 
-- **Keycloak** — the JWT trust provider, issuer, audience, and claim contract Prompt 17 configured,
-  unchanged; and
+- **Keycloak** — the JWT trust provider, issuer, audience, and claim contract Prompt 17
+  configured, unchanged; and
 - **fixed token** — one opaque bearer token compared against a value read from a mounted file.
 
 Startup must fail, never warn and continue, when the configured mode is:
@@ -40,9 +40,9 @@ There is no fallback in either direction, under any condition:
   the fixed comparison, and it must never reach JWT parsing, signature verification, or
   `CallerTokenValidator`.
 
-Exactly one authentication branch is reachable after the startup selection. Make that structural —
-one branch is constructed, the other is not — rather than a runtime condition evaluated per request
-that a later refactor can invert.
+Exactly one authentication branch is reachable after the startup selection. Make that structural
+— one branch is constructed, the other is not — rather than a runtime condition evaluated per
+request that a later refactor can invert.
 
 ## Implement the fixed-token provider
 
@@ -99,7 +99,7 @@ additional mitigation. Record them; do not add a compensating control that was n
 
 Keycloak remains a functioning option, not a deprecated one. Preserve unchanged:
 
-- issuer `https://auth.tqaentry.com/realms/homelab`;
+- issuer `https://auth.tqaentry.com/realms/brightflag-mcp`;
 - audience `brightflag-mcp`;
 - signature, expiry, not-before, clock-skew, tenant, role, and scope validation;
 - the flat top-level `tid` and `roles` claims the server requires; and
@@ -109,12 +109,9 @@ Grant the designated Keycloak development user both `brightflag.read` and `brigh
 Refuse a token whose audience lacks `brightflag-mcp`, and refuse a token whose flat `roles` claim
 lacks the required BrightFlag role for the capability being exercised.
 
-State the boundary that follows honestly. The caller client `mcp-client` is shared with other MCP
-services on this host, and its audience mapper can also place `brightflag-mcp` in a token obtained
-for one of them. The required BrightFlag roles are therefore the service boundary; the audience
-check is a necessary condition, not service separation. Do not document the audience as though it
-isolated this server. Dedicated-client separation is tracked separately and is not part of this
-stage.
+Preserve Prompt 17's dedicated realm and pre-registered public-client contract. Do not move this
+stage to the shared `homelab` realm or `mcp-client`; Prompt 19 owns that later deployment change and
+the shared-client audience limitation that follows from it.
 
 ## What this stage deliberately does not add
 
@@ -127,6 +124,9 @@ stage.
   revocation list, escalate a warning into a refusal, restrict the surface, or disable payment
   because fixed-token mode is selected. Both supported modes permit the complete BrightFlag MCP
   surface, including payment planning and execution.
+- **No Keycloak realm or caller-client migration.** Keep Prompt 17's dedicated realm and public
+  client intact. Prompt 19 alone moves the deployment to the shared `homelab` realm and
+  `mcp-client`.
 
 ## Prove
 
@@ -150,8 +150,7 @@ stage.
   validation behave exactly as Prompt 17 left them, protected-resource metadata and its challenge
   are served, and the designated development user's token grants both read and payment;
 - a Keycloak token whose audience lacks `brightflag-mcp` is refused, and so is a token that carries
-  `brightflag-mcp` in its audience but lacks the required flat `roles` value — including one minted
-  through the shared caller client for another MCP service;
+  `brightflag-mcp` in its audience but lacks the required flat `roles` value;
 - neither mode falls back to the other: an unreachable Keycloak, a failed JWKS retrieval, and a
   rejected JWT each refuse the request without attempting the fixed token, and a valid fixed token
   presented in Keycloak mode is refused; and
@@ -166,8 +165,9 @@ stage.
 - Fixed-token mode authenticates one shared configured identity holding both capabilities, and its
   consequences for audit attribution, rate limiting, plan scoping, expiry, revocation, and LAN
   secret exposure are documented rather than mitigated.
-- The Keycloak contract, its claim requirements, and its protected-resource discovery are unchanged,
-  and the shared-caller-client audience limitation is stated rather than presented as isolation.
+- The dedicated Prompt 17 Keycloak realm, public-client contract, claim requirements, and
+  protected-resource discovery are unchanged; the shared realm and caller client remain Stage 19's
+  work.
 - No environment, profile, or hardening check restricts an operator's explicit selection of
   fixed-token mode.
 - Formatting, build, and tests succeed.
@@ -175,5 +175,5 @@ stage.
 Commit locally. Use `narrative-required` and record the exclusive two-mode authentication choice,
 the shared static home-lab identity and the audit, rate-limit, plan-scope, expiry, and revocation
 consequences it accepts, the deliberate absence of a production-profile guard, and the decision that
-required roles rather than audience are the service boundary under the shared caller client. Do not
-push unless requested.
+Prompt 17's dedicated Keycloak realm and public-client contract remain unchanged until Stage 19. Do
+not push unless requested.

@@ -17,9 +17,9 @@ and testable, not to soften them.
 ## Preconditions
 
 - Stages 1–11 are merged and green, and Stage 17 is merged and its result is the server baseline.
-- The Keycloak realm `homelab`, the resource client `brightflag-mcp`, and the flat `tid` and `roles`
-  claims are configured and working; a development user holds `brightflag.read` and
-  `brightflag.payment`.
+- Prompt 17's dedicated Keycloak realm `brightflag-mcp`, its pre-registered public client, resource
+  audience, and flat `tid` and `roles` claims are configured and working; the development user holds
+  the read role, and this stage grants the payment role without changing that realm or client.
 - The reviewed home-lab tenant value, subject, and role names for the fixed identity exist as
   configuration, not as literals in code.
 - The deployment path that mounts the fixed token file is Stage 19's; this stage needs only the
@@ -70,11 +70,12 @@ Serve the existing OAuth protected-resource metadata and its `resource_metadata`
 Keycloak mode only. In fixed-token mode answer with a bare `WWW-Authenticate: Bearer` challenge and
 do not route the metadata endpoint at all.
 
-### 5. Preserve the Keycloak contract and state its real boundary
+### 5. Preserve the Prompt 17 Keycloak contract
 
-Leave issuer, audience, signature, lifetime, tenant, role, and scope validation untouched. Document
-that the shared `mcp-client` can place `brightflag-mcp` in a token obtained for another MCP service,
-so the required roles — not the audience — are the service boundary.
+Leave the dedicated realm, pre-registered public client, issuer, audience, signature, lifetime,
+tenant, role, scope, metadata, and challenge contract untouched. Grant the designated development
+user the payment role, but leave the move to the shared `homelab` realm and `mcp-client` to
+Stage 19.
 
 ### 6. Document the accepted consequences
 
@@ -107,8 +108,7 @@ Map one-to-one to the prompt's Prove list:
    not-before, tenant, role, scope, metadata, and challenge — and assert the development user's
    token grants read and payment;
 8. refuse a token whose audience lacks `brightflag-mcp`, and refuse a token carrying that audience
-   but lacking the required flat `roles` value, including a token shaped as the shared caller client
-   would mint it for another MCP service;
+   but lacking the required flat `roles` value;
 9. assert no fallback in either direction: unreachable Keycloak, failed JWKS retrieval, and rejected
    JWT each refuse without a fixed-token attempt, and a valid fixed token in Keycloak mode is
    refused; and
@@ -140,8 +140,8 @@ expected result.
 Commit locally. Suggested message: `Add exclusive fixed-token home-lab authentication`.
 
 Use `narrative-required` when published. Do not push unless requested. Do not begin Stage 19's
-deployment change, retire any `deploy/local` artifact, alter the Keycloak realm, or start contingent
-Stages 12 or 13.
+deployment change, retire any `deploy/local` artifact, move to the shared `homelab` realm or
+`mcp-client`, or start contingent Stages 12 or 13.
 
 ## Risks
 

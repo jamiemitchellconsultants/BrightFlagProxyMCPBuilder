@@ -30,6 +30,8 @@ named where a reader meets it, rather than being discovered later by someone who
   mappers, and a development user holding both roles exist or are created by the deployment.
 - The BrightFlag integration-test service token has been seeded into LocalStack; no production
   BrightFlag URL or credential exists for this deployment.
+- The integration-test tenant's approved-invoice status has been reviewed and is supplied explicitly
+  to the LocalAI deployment script; the script has no default for it.
 - The DNS name `brightflag-mcp.tqaentry.com` resolves to the shared Caddy for intended clients.
 - `ai-mcp-server` runs PowerShell 7.6.4. The LocalAI deployment script targets 7.6 or later and
   declares that minimum; Windows PowerShell 5.1 is not a target.
@@ -42,7 +44,8 @@ HTTP transport mode with no profile guard; host validation for exactly three nam
 the LocalAI-owned deployment contract, its generated Compose and Caddy fragment, its resolved-commit
 build and retained-image rollback, and its three LocalStack secret identifiers; payment enabled by a
 named role value in both authentication modes; explicit recording of the omitted hardening, the
-unproven private-source matcher, the LAN-readable LocalStack, and the plaintext credentials.
+unproven private-source matcher, the LAN-readable LocalStack, and the plaintext credentials; and a
+required reviewed integration-test approved-invoice status with no deployment default.
 
 ## Scope explicitly out
 
@@ -81,7 +84,8 @@ deployment supplies it, and assert the configured healthcheck's `Host` value is 
 Describe what the LocalAI script produces and what the server requires from it: the `mcp-public`
 network and unpublished port, the `auth.tqaentry.com:host-gateway` mapping, the explicit `http://`
 Caddy site, the non-buffering proxy settings, the three materialised secret files, and the named
-read and payment role values. Name the script as the sole deployment owner.
+read and payment role values. Require the reviewed integration-test approved-invoice status as an
+operator-supplied value with no default. Name the script as the sole deployment owner.
 
 ### 5. Enable payment in both modes
 
@@ -114,7 +118,8 @@ Map one-to-one to the prompt's Prove list:
    published port, the `auth.tqaentry.com:host-gateway` mapping, and the expected healthcheck;
 5. assert the generated Compose has no unresolved placeholder and no secret value, and assert the
    absence of `user`, `read_only`, `cap_drop`, `security_opt`, `tmpfs`, CPU and memory limits, and
-   log rotation, each with a test naming the omission as intentional;
+   log rotation, each with a test naming the omission as intentional; assert that it contains the
+   explicitly supplied approved-invoice status and that the deployment script defines no default;
 6. assert the generated Caddy fragment's site address begins `http://`, carries the private-source
    matcher and non-buffering settings, changes no unrelated fragment or the root Caddyfile, and
    describes the matcher as unproven with its issue reference;
@@ -135,9 +140,9 @@ Map one-to-one to the prompt's Prove list:
     or credential and assert none; and assert this stage changes no LocalStack network, port, or
     firewall configuration.
 
-Tests 1–3, 5, 9, and 11 are automatable in the server repository. Tests 4, 6, 7, 8, and 10 depend on
-the LocalAI script's output or on the host: automate what can be asserted against generated files,
-and label the rest as manual gates.
+Tests 1–3, 5, 9, and 11 are automatable in the server repository. Tests 4, 6, 7, 8, and 10 depend
+on the LocalAI script's output or on the host: automate what can be asserted against generated
+files, and label the rest as manual gates.
 
 ## Acceptance checks
 

@@ -8,6 +8,11 @@ Revised 2026-08-02, on operator instruction: the host's installed PowerShell ver
 a settled requirement. This does not change any decision the review took; it removes an assumption
 implementation had otherwise been left to make.
 
+Revised 2026-08-02, on operator instruction after implementation review: Stage 18 preserves the
+dedicated Prompt 17 Keycloak realm and client contract; Stage 19 alone moves the deployment to the
+shared `homelab` realm and `mcp-client`. The deployment must also receive the reviewed
+integration-test invoice status explicitly, with no guessed default.
+
 ## Purpose
 
 This plan adds later prompts to `BrightFlagProxyMCPBuilder` and direct host-deployment support to
@@ -108,8 +113,9 @@ Prompt 18 adds a fixed opaque bearer-token provider without removing Keycloak. I
 - retained Keycloak issuer, audience, signature, lifetime, role, and scope validation;
 - both `brightflag.read` and `brightflag.payment` for the designated Keycloak development user;
 - rejection of tokens whose audience lacks `brightflag-mcp` or whose flat `roles` claim lacks the
-  required BrightFlag roles; with the shared `mcp-client`, roles are the service boundary because
-  its audience mapper can also add `brightflag-mcp` to tokens for another MCP service;
+  required BrightFlag roles;
+- preservation of Prompt 17's dedicated `brightflag-mcp` realm and pre-registered public-client
+  contract; the move to the shared `homelab` realm and `mcp-client` belongs to Prompt 19;
 - no environment or profile restriction on selecting fixed-token mode; and
 - no automatic hardening or production-suitability check for this explicitly selected shortcut.
 
@@ -169,6 +175,8 @@ Prompt 19 requires:
   can discover and fetch HTTPS Keycloak JWKS without modifying the shared Caddy host deployment;
 - full payment configuration, including a named `BrightFlag__Authorization__MarkInvoicePaidRoles__0`
   value alongside the corresponding read role;
+- a required operator-supplied BrightFlag integration-test approved-invoice status, with no default
+  or guessed status value;
 - retirement by the future Prompt 19 application of `deploy/local/compose.yaml`, its Caddy
   template, `manual-gates.md`, every `deploy/local/scripts/` deployment script, and
   `docs/deploy-local.md`; the prompt replaces them with the LocalAI-owned deployment and marks any
@@ -211,7 +219,8 @@ Add `LocalAI/docs/setup-brightflag-mcp-windows.ps1`, modelled on
 The script will:
 
 1. Accept repository URL, Git ref, work directory, auth mode, Keycloak user, canonical hostname,
-   and LocalStack secret identifiers.
+   the reviewed BrightFlag integration-test approved-invoice status, and LocalStack secret
+   identifiers. The status is required and has no default.
 2. Require Git for Windows and the AWS CLI in preflight.
 3. Resolve the supplied Git ref once to a full 40-character commit using `git ls-remote` with
    `GIT_ASKPASS`, a credential helper, or an equivalent mechanism that keeps the credential out of
@@ -329,6 +338,8 @@ Keycloak client separation, and secret-lifecycle hardening are deferred to those
 
 - PowerShell parses successfully under 7.6 or later, and the script declares that minimum;
 - generated Compose contains no unresolved placeholders or secret values;
+- generated Compose contains the explicitly supplied reviewed approved-invoice status, and the
+  deployment script has no default for that value;
 - generated Compose declares one BrightFlag container, no published backend port, `mcp-public`, the
   expected healthcheck, the permitted host set, and the `auth.tqaentry.com:host-gateway` mapping;
 - generated Compose deliberately omits the listed Prompt 17 container hardening and resource-limit

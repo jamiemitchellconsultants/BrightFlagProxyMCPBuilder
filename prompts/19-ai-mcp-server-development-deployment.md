@@ -77,9 +77,9 @@ direct TLS termination and the trusted-proxy posture Prompt 8 defined. The plain
 
 Do not describe this deployment as an HTTPS trusted-proxy deployment, and do not reuse the
 trusted-proxy posture to stand in for it. The two make different claims, and only one of them is
-true here. Bearer credentials — the fixed token and Keycloak access tokens alike — cross this LAN in
-plaintext, which is accepted for this physically controlled network and must be stated wherever the
-endpoint is documented.
+true here. The fixed token and Keycloak access token are both bearer credentials. They cross this
+LAN in plaintext, which is accepted for this physically controlled network and must be stated
+wherever the endpoint is documented.
 
 Add host validation to the HTTP transport. It permits exactly:
 
@@ -113,10 +113,11 @@ fetches the HTTPS Keycloak issuer's discovery and JWKS documents without any cha
 Caddy or Keycloak deployment. The plaintext MCP endpoint does not weaken the Keycloak issuer,
 discovery, token, or JWKS endpoints, which stay HTTPS.
 
-**Capabilities.** Both authentication modes permit the complete surface. The generated configuration
-names the payment grant explicitly — `BrightFlag__Authorization__MarkInvoicePaidRoles__0` alongside
-the corresponding `BrightFlag__Authorization__ReadApprovedInvoicesRoles__0` value — so payment is
-enabled by a named role value rather than by an overlay file's absence or presence.
+**Capabilities.** Both authentication modes permit the complete surface. The generated
+configuration names the payment grant explicitly —
+`BrightFlag__Authorization__MarkInvoicePaidRoles__0` alongside the corresponding
+`BrightFlag__Authorization__ReadApprovedInvoicesRoles__0` value — so payment is enabled by a named
+role value rather than by an overlay file's absence or presence.
 
 **Configuration contract.** The deployment supplies configuration as environment variables, and the
 server's option names are therefore a cross-repository contract rather than a private detail. These
@@ -127,6 +128,8 @@ names must match what the LocalAI script generates:
   `__Source__Kind` / `__Source__Path` for the mounted token file;
 - `BrightFlag__Hosting__HttpTransportSecurity` — the explicit plaintext value added by this stage;
 - `BrightFlag__Hosting__AllowedHosts__0..2` — the three permitted host values; and
+- `BrightFlag__Approval__AllowedInvoiceStatuses__0` — the reviewed integration-test tenant status,
+  supplied explicitly to the deployment script with no default; and
 - `BrightFlag__Authorization__ReadApprovedInvoicesRoles__0` and
   `BrightFlag__Authorization__MarkInvoicePaidRoles__0`.
 
@@ -146,8 +149,8 @@ from.
 
 - The requested ref, the resolved commit, the image tag, the image ID, and the previous deployable
   image are recorded as deployment state.
-- The previous image is retained, and rollback recreates only BrightFlag from it — without resolving
-  or rebuilding a moving ref, which would defeat the point of having recorded one.
+- The previous image is retained, and rollback recreates only BrightFlag from it — without
+  resolving or rebuilding a moving ref, which would defeat the point of having recorded one.
 - The GitHub credential used to fetch a private repository is transient. It never reaches
   LocalStack, Compose, a generated file, a log, or a command argument.
 
@@ -192,7 +195,9 @@ BrightFlag roles are. Further client separation and hardening are tracked by iss
 
 The BrightFlag endpoint and credential configured here refer only to BrightFlag's integration-test
 environment. No production BrightFlag API URL or production credential exists for this deployment,
-and none may be introduced by it. Payment is enabled against the integration-test tenant only.
+and none may be introduced by it. Payment is enabled against the integration-test tenant only. The
+operator must supply that tenant's reviewed approved-invoice status explicitly; the deployment
+script has no default and must not guess one from a plausible label.
 
 ## Prove
 
@@ -210,7 +215,9 @@ and none may be introduced by it. Payment is enabled against the integration-tes
   host port, and carries the `auth.tqaentry.com:host-gateway` mapping and the expected healthcheck;
 - the generated Compose contains no unresolved placeholder and no secret value, and deliberately
   omits the container user, read-only root filesystem, capability drop, `no-new-privileges`,
-  `tmpfs`, CPU and memory limits, and log rotation, each recorded as an intentional omission;
+  `tmpfs`, CPU and memory limits, and log rotation, each recorded as an intentional omission; it
+  contains the explicitly supplied reviewed approved-invoice status, and the deployment script has
+  no default for that value;
 - the generated Caddy fragment uses the explicit `http://` site address, carries the private-source
   matcher and non-buffering Streamable HTTP settings, leaves every unrelated fragment and the root
   Caddyfile unchanged, and documents the matcher as unproven and tracked by [#45][issue-45];
@@ -239,7 +246,8 @@ and none may be introduced by it. Payment is enabled against the integration-tes
 - The server serves `http://brightflag-mcp.tqaentry.com/mcp` under an explicitly selected plaintext
   transport mode that states what it is, with host validation permitting exactly three names.
 - Both read and payment capabilities are available in both authentication modes, against
-  BrightFlag's integration-test environment only.
+  BrightFlag's integration-test environment only, using an explicitly supplied reviewed
+  approved-invoice status rather than a deployment default.
 - The open posture is recorded, not disguised: the omitted container hardening, the unproven
   private-source matcher, the LAN-readable unauthenticated LocalStack, and the plaintext bearer
   credentials are each stated where a reader will meet them.
