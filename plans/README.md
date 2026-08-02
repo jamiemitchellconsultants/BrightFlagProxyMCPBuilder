@@ -28,11 +28,17 @@ OpenAPI document read on 2026-07-28 (114 operations, 70 schemas, byte-identical 
 | [15-deploy-local-runbook.md](15-deploy-local-runbook.md) | [15](../prompts/15-deploy-local-runbook.md) |
 | [16 — retire runner local deployment][plan-16] | [16][prompt-16] |
 | [17 — shared local deployment][plan-17] | [17][prompt-17] |
+| [18 — home-lab fixed-token authentication][plan-18] | [18][prompt-18] |
+| [19 — `ai-mcp-server` development deployment][plan-19] | [19][prompt-19] |
 
 [plan-16]: 16-retire-github-runner-local-deployment.md
 [prompt-16]: ../prompts/16-retire-github-runner-local-deployment.md
 [plan-17]: 17-local-pull-localstack-keycloak-caddy-deployment.md
 [prompt-17]: ../prompts/17-local-pull-localstack-keycloak-caddy-deployment.md
+[plan-18]: 18-home-lab-fixed-token-authentication.md
+[prompt-18]: ../prompts/18-home-lab-fixed-token-authentication.md
+[plan-19]: 19-ai-mcp-server-development-deployment.md
+[prompt-19]: ../prompts/19-ai-mcp-server-development-deployment.md
 
 † **Contingent stages, not part of version 1.** Stage 12 runs only if corporate governance
 reclassifies this service off the low-use / low-criticality classification under which Stage 8's
@@ -47,6 +53,13 @@ publication. Stage 17 then adds the replacement host-pull deployment. A fresh im
 Stages 14–16 and applies Stage 17 directly after Stage 11. None of these stages enables payment or
 makes a contingent stage apply.
 
+Stages 18 and 19 both run after Stage 17, in that order, and are the development deployment for the
+`ai-mcp-server` home-lab host. They override only the Stage 17 home-lab decisions named in the
+supersession table in Prompt 19, and every unlisted Stage 17 requirement survives. Stage 17's prompt
+text and the historical narrative are not rewritten. Stage 19 is the one stage in the sequence that
+enables payment, against BrightFlag's integration-test environment only, and neither stage makes a
+contingent stage apply.
+
 Each plan follows one structure: Context, Preconditions, Scope in, Scope explicitly out, Work items,
 Tests mapped one-to-one onto the prompt's own "Prove" list, Acceptance checks with runnable
 commands, Stage boundary, and Risks. Every plan ends by naming what must **not** begin next, because
@@ -54,7 +67,7 @@ the sequence's value comes from stopping at each boundary.
 
 ## Open decisions the plans surface
 
-Nine points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
+Eleven points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
 position:
 
 - **The invoice-summary join window (Plan 05).** `getInvoiceSummaryList` exposes no `invoiceID`
@@ -96,3 +109,15 @@ position:
   tokens from one canonical HTTPS issuer, and BrightFlag owns one LAN-only Caddy fragment rather
   than the shared stacks. Real-secret deployment is blocked while unauthenticated LocalStack is
   reachable from the LAN.
+- **What a shared caller identity costs (Plan 18).** Prompt 18 requires a fixed-token mode whose
+  identity is one static configured caller, and Prompt 8 requires caller-bound, caller-scoped
+  payment plans. Both hold at once only if the plan boundary collapses onto that single identity.
+  Plan 18 takes the position that this is disclosed and tested — a test asserts the shared audit
+  subject — rather than compensated for, because a compensating control here would invent a
+  distinction the mode does not have.
+- **Who owns the deployment (Plan 19).** Stage 17 put a deployment entry point in the server
+  repository; Stage 19 moves it to a script in the separately managed LocalAI repository, which this
+  repository's prompts cannot edit. Plan 19 resolves the split by deleting the server-owned
+  artifacts outright, keeping only the server-side transport, host-validation, and capability
+  configuration the external deployment requires, and checking the boundary with a grep that fails
+  if any retired reference still reads as current.

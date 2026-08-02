@@ -55,6 +55,9 @@ references do not move:
   path](prompts/16-retire-github-runner-local-deployment.md)
 - [Pull and deploy locally with LocalStack, Keycloak, and shared
   Caddy](prompts/17-local-pull-localstack-keycloak-caddy-deployment.md)
+- [Add home-lab fixed-token authentication](prompts/18-home-lab-fixed-token-authentication.md)
+- [Deploy the development server on
+  `ai-mcp-server`](prompts/19-ai-mcp-server-development-deployment.md)
 
 Prompts 14 and 15 describe the superseded self-hosted-runner and dedicated-nginx deployment. Do not
 apply them to a fresh implementation. If they were already applied, run Prompt 16 to remove that
@@ -64,6 +67,16 @@ Prompt 17 applies directly after Prompt 11 on a fresh implementation. It keeps v
 publication on GitHub-hosted runners, but a script on `ai-mcp-server` pulls and deploys the digest.
 It consumes existing LocalStack Secrets Manager, Keycloak, and shared Caddy infrastructure without
 owning those stacks or enabling payment.
+
+Prompts 18 and 19 run after Prompt 17, in that order, and together are the development deployment
+for one physically controlled home-lab host. Prompt 18 adds a fixed opaque bearer token as an
+explicitly selected alternative to Keycloak, with no fallback between them. Prompt 19 hands
+deployment ownership to a script in the separate LocalAI repository, serves the plaintext LAN
+endpoint `http://brightflag-mcp.tqaentry.com/mcp` under an explicit plaintext transport mode, and
+enables payment against BrightFlag's integration-test environment. They override only the Prompt 17
+home-lab decisions listed in Prompt 19's supersession table; every other Prompt 17 requirement
+stands, and Prompt 17's own text is not rewritten. Nothing in either stage describes a production
+deployment or a production authentication strategy.
 
 Do not paste every prompt into one message. Each stage introduces one bounded capability and asks
 for executable evidence before the next begins.
