@@ -36,7 +36,8 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [25](#entry-address-ai-mcp-server-adversarial-review) | 2026-08-02 | Address ai-mcp-server adversarial review | product | Revise the proposed plan to require flat Keycloak `tid` and `roles` claims, container-to-issuer host-gateway routing, later retirement of the Prompt 17 server-local deployment artifacts, deterministic Git-ref build state, and correctly… |
 | [26](#entry-approve-and-freeze-ai-mcp-server-development-deployment-plan) | 2026-08-02 | Approve and freeze the ai-mcp-server development deployment plan | architecture | Approve the adversarially reviewed plan as the frozen implementation baseline for Builder Stages 18 and 19 and the LocalAI Windows deployment owner. |
 | [27](#entry-correct-ai-mcp-server-implementation-review-findings) | 2026-08-02 | Correct ai-mcp-server implementation review findings | correction | Correct Stage 18/19 sequencing and require the reviewed integration-test invoice status explicitly after implementation review; track the remaining Keycloak work in LocalAI issue #28. |
-| [28](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial reviews. |
+| [28](#entry-add-stages-18-and-19-for-the-ai-mcp-server-development-deployment) | 2026-08-02 | Add Stages 18 and 19 for the ai-mcp-server development deployment | product | Add two stages after Stage 17. Stage 18 makes caller authentication exactly one explicitly selected mode—Keycloak or one fixed opaque bearer token—with separately named startup failures and no fallback. |
+| [29](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial reviews. |
 
 ---
 
@@ -1393,9 +1394,67 @@ any of them as fixed.
 
 ---
 
+<a id="entry-add-stages-18-and-19-for-the-ai-mcp-server-development-deployment"></a>
+
+## Entry 28 — 2026-08-02 — Add Stages 18 and 19 for the ai-mcp-server development deployment
+
+*Kind: product. Status: accepted.*
+
+## Context
+
+Stage 17 deployed the server from an entry point inside the server repository: an immutable GHCR
+digest, a dedicated Keycloak contract, HTTPS through shared Caddy, payment disabled, and
+real-secret bootstrap blocked until LocalStack was proved unreachable from the LAN. The
+`ai-mcp-server` host now uses LocalAI scripts as the deployment owners for its MCP services, and
+the clients this deployment serves need a fixed-header option as well as Keycloak.
+
+The deployment plan was approved and frozen after adversarial review. Implementation review then
+showed that the generated Stage 18 wording crossed its stage boundary by assuming Stage 19's shared
+realm/client, while the LocalAI implementation guessed a tenant-specific BrightFlag status. The
+same review found credential, Caddy, Keycloak, secret-lifecycle, rollback, state, and removal
+behaviour that needed an explicit disposition rather than silent implementation drift.
+
+## Decision
+
+Add two stages after Stage 17. Stage 18 makes caller authentication exactly one explicitly selected
+mode—Keycloak or one fixed opaque bearer token—with separately named startup failures and no
+fallback. It preserves Prompt 17's dedicated `brightflag-mcp` realm and pre-registered public
+client.
+
+Stage 19 retires the server-owned deployment, names LocalAI as sole deployment owner, moves the host
+deployment to the shared `homelab` realm and `mcp-client`, adds an explicit plaintext transport
+mode and exact host validation, and enables payment in both authentication modes against
+BrightFlag's integration-test environment. The reviewed tenant's approved-invoice status is an
+operator-supplied value with no default.
+
+Save the implementation review as a separate artifact. Correct the GitHub credential,
+Caddy-activation, and false-success stop/removal defects in LocalAI. Track complete Keycloak setup,
+exact mapper read-back, and auth-independent fixed-token materialisation in LocalAI issue #28.
+Accept or skip the explicitly directed home-lab findings without presenting them as fixed.
+
+## Consequences
+
+Stage 18 can be applied to the Prompt 17 baseline without depending on a topology introduced later,
+and Stage 19 receives customer-specific vocabulary without inventing it. The server repository
+stops owning deployment only when Stage 19 is applied, and both authentication modes retain the
+complete read and payment surface.
+
+The open home-lab posture remains visible: bearer credentials cross the LAN in plaintext,
+LocalStack is unauthenticated and LAN-reachable, generated Compose omits hardening and resource
+limits, deployment state is written before health is proven, and rollback uses the retained tag
+under operator observation. Fixed-token materialisation is currently conditional on fixed mode.
+The dedicated Keycloak correction remains follow-up work in LocalAI #28 rather than being partially
+claimed here.
+
+End-to-end proof of the private-source matcher remains in Builder #45. The saved implementation
+review records every finding, including the skipped production-origin check and the still-open
+device-token claim-set gate.
+
+---
+
 <a id="entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review"></a>
 
-## Entry 28 — 2026-08-02 — Prepare the ai-mcp-server development deployment for adversarial review
+## Entry 29 — 2026-08-02 — Prepare the ai-mcp-server development deployment for adversarial review
 
 *Kind: architecture. Status: proposed.*
 
