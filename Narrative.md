@@ -32,7 +32,7 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [21](#entry-add-github-homelab-delivery-stage) | 2026-07-31 | Add GitHub homelab delivery stage | product | Add optional Stage 14. GitHub-hosted CI builds and verifies an immutable image on protected `main`; a repository-scoped Windows runner may deploy it only after the server repository is private. |
 | [22](#entry-make-prompt-8-rollover-tests-deterministic) | 2026-07-31 | Make Prompt 8 rollover tests deterministic | product | Correct Prompt 8 and its Stage 8 plan to require two proof layers. Dedicated live-provider tests exercise actual loopback HTTP retrieval and fail-closed unavailability. |
 | [23](#entry-add-local-deployment-runbook-stage) | 2026-07-31 | Add local deployment runbook stage | product | Add optional Stage 15 after Stage 14. |
-| [24](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial review. |
+| [24](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial reviews. |
 
 ---
 
@@ -1266,6 +1266,11 @@ The review found an inaccurate HTTPS trusted-proxy model for the plaintext endpo
 build race, and several areas where a production-oriented design would add restrictions outside
 the deliberately open home-lab requirement.
 
+A second review found that Keycloak could not function without the server's required `tid` and flat
+`roles` claim mappings or a route from the BrightFlag container to the HTTPS issuer. It also found
+an active Prompt 17 deployment owner, incorrectly grouped verification, and several missing
+implementation details and plain-language consequences.
+
 ## Decision
 
 Record a proposed implementation plan under `reviews/` rather than adding a numbered stage before
@@ -1284,6 +1289,13 @@ policy, but defer its public-hostname verification, the final Keycloak caller co
 LocalStack secret-lifecycle work to issues [45][issue-45], [46][issue-46], and [47][issue-47]
 respectively.
 
+Promote the functional Keycloak requirements into the initial plan: map the configured tenant to
+`tid`, project BrightFlag client roles into a flat `roles` claim, and map `auth.tqaentry.com` to the
+host gateway inside the BrightFlag container. Prompt 19 must retire the old server-local deployment
+owner through its future application. Keep shared-client separation and additional Keycloak
+hardening in issue [46][issue-46], retain issue [45][issue-45] as a non-blocking proof gap, and
+state the accepted LocalStack and fixed-token consequences without adding mitigation.
+
 ## Consequences
 
 The agreed direction is now reviewable as one bounded artifact, including the places where it
@@ -1293,6 +1305,10 @@ change the proposed plan without rewriting prompt history or unwinding implement
 The plan now makes the moving-ref build reproducible while leaving the fixed-token and plaintext
 home-lab paths intentionally open. The three deferred issues provide visibility but do not block
 the initial deployment plan.
+
+The Keycloak option is now specified as functional rather than deferred. The revised verification
+separates Builder, LocalAI, and future server-prompt checks so no skipped server implementation
+check is described as passing.
 
 The plan itself is not approval to implement. A later decision must accept or correct it before the
 builder stages and LocalAI script are created.

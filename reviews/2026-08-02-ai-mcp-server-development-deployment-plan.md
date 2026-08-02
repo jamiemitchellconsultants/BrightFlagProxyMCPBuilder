@@ -1,6 +1,6 @@
 # Adversarial review plan — `ai-mcp-server` development deployment
 
-Status: proposed; revised after adversarial review; not yet approved for implementation.
+Status: proposed; revised after adversarial reviews; not yet approved for implementation.
 
 Date: 2026-08-02
 
@@ -24,10 +24,14 @@ strategy. The application will not enforce that distinction with a production-pr
   implemented home-lab behavior rather than revising Prompt 17 history.
 - The target is the Windows host `ai-mcp-server`, running Linux containers through Docker Desktop.
 - The canonical endpoint is `http://brightflag-mcp.tqaentry.com/mcp`.
-- Caddy permits private source addresses and rejects non-private sources for the BrightFlag route.
+- Caddy configures a private-source matcher for the BrightFlag route. Its effectiveness through
+  Docker Desktop and router forwarding is unproven and tracked by issue [#45][issue-45].
 - The BrightFlag MCP endpoint uses an explicit plaintext transport mode on the LAN. It is not
   represented as an HTTPS trusted-proxy deployment.
 - Keycloak remains HTTPS at `https://auth.tqaentry.com/realms/homelab`.
+- Keycloak is a functioning initial authentication option. It emits the server-required flat `tid`
+  and `roles` claims, and the BrightFlag container resolves the HTTPS issuer through a self-owned
+  host-gateway mapping.
 - Authentication selects exactly one of fixed token or Keycloak, with no fallback.
 - Both supported authentication modes permit the complete BrightFlag MCP surface, including
   payment planning and execution.
@@ -38,8 +42,8 @@ strategy. The application will not enforce that distinction with a production-pr
 - LocalStack remains reachable from other LAN machines. This deployment does not add an isolation
   gate or alter its firewall rules.
 - The deployment resolves a configurable under-development Git ref once, builds that exact commit,
-  and records both values, following the approach in
-  `LocalAI/docs/setup-ontology-mcp-windows.ps1`; it does not require a published GHCR digest.
+  and records both values. `LocalAI/docs/setup-ontology-mcp-windows.ps1` is a structural model
+  only; it does not implement this immutable-build behavior.
 - The BrightFlag endpoint and credentials can refer only to BrightFlag's integration-test
   environment. The developer is not issued a BrightFlag production API URL or production secret.
 
@@ -65,8 +69,8 @@ to `BrightFlagProxyMCPServer`.
 
 1. Inspect every working tree before editing and preserve unrelated work.
 2. Confirm Prompt 17 is merged and use its implemented result as the server baseline.
-3. Incorporate the two newer LocalAI `origin/main` commits containing the Keycloak proposal and
-   private Git build authentication before building on those files.
+3. Use LocalAI `main` baseline `5209120`, which already contains the Keycloak proposal and private
+   Git build authentication commits.
 4. Continue from the current BrightFlag builder branch unless its state has changed.
 5. Record the exact baselines used by the review and implementation.
 
@@ -84,20 +88,30 @@ Prompt 18 adds a fixed opaque bearer-token provider without removing Keycloak. I
 - no fallback when Keycloak is unavailable or rejects a token;
 - a mounted token file for the fixed-token deployment path;
 - constant-time token comparison and complete secret redaction;
-- a deterministic shared home-lab caller identity;
+- a deterministic shared home-lab caller identity from reviewed configuration: subject, configured
+  tenant, and full read/payment roles;
 - read and payment capabilities for that fixed identity;
 - a simple bearer challenge suitable for clients configured with a fixed header, without Keycloak
   discovery or OAuth protected-resource metadata in fixed-token mode;
 - retained Keycloak issuer, audience, signature, lifetime, role, and scope validation;
 - both `brightflag.read` and `brightflag.payment` for the designated Keycloak development user;
-- rejection of arbitrary `homelab` realm tokens that are not addressed to `brightflag-mcp` or do
-  not carry the required roles;
+- rejection of tokens whose audience lacks `brightflag-mcp` or whose flat `roles` claim lacks the
+  required BrightFlag roles; with the shared `mcp-client`, roles are the service boundary because
+  its audience mapper can also add `brightflag-mcp` to tokens for another MCP service;
 - no environment or profile restriction on selecting fixed-token mode; and
 - no automatic hardening or production-suitability check for this explicitly selected shortcut.
 
 The prompt must state the fixed-token consequences plainly. Every token holder shares one caller
-identity, audit attribution, rate-limit bucket, and caller-bound plan scope. This is accepted for
-the physically controlled home-lab development network.
+identity, audit attribution, rate-limit bucket, and caller-bound plan scope. Fixed-token mode does
+not traverse the JWT `CallerTokenValidator`: it has no token expiry, revocation, or tenant-claim
+corroboration, and establishes those values only from its reviewed static configuration. Any LAN
+caller able to read the unauthenticated LocalStack secrets can obtain the fixed token and
+cursor-signing key; this makes fixed-token authentication and cursor integrity a LAN trust
+boundary. These consequences are accepted for the physically controlled home-lab development
+network without additional mitigation.
+
+The proof list must test that startup enables exactly one authentication branch, that the selected
+fixed-token branch constructs that static caller identity, and that Keycloak tokens never reach it.
 
 The matching plan follows the repository's required structure and maps tests one-to-one to the
 prompt's proof list.
@@ -122,6 +136,8 @@ Prompt 19 explicitly supersedes these Prompt 17 home-lab decisions:
 | HTTPS MCP resource | Plaintext LAN MCP resource |
 | HTTPS trusted-proxy transport | Explicit plaintext home-lab transport |
 | Dedicated Keycloak realm | Shared `homelab` realm |
+| Server `deploy/local` owns deployment | LocalAI script is the sole deployment owner |
+| Container hardening and resource limits | Intentionally omitted from this open home-lab Compose |
 
 Prompt 19 requires:
 
@@ -130,10 +146,23 @@ Prompt 19 requires:
 - an explicit server plaintext transport mode that accepts the HTTP external resource URI without
   claiming an HTTPS trusted-proxy topology;
 - no application profile guard that rejects that explicitly selected plaintext mode;
-- a private-source matcher that rejects Internet clients;
+- a private-source matcher whose effectiveness through Docker Desktop is expressly unproven and
+  tracked by issue [#45][issue-45], rather than claimed as a completed rejection property;
 - a BrightFlag container on external network `mcp-public` with no published backend port;
 - Streamable HTTP proxy settings that prevent buffering;
-- host validation for `brightflag-mcp.tqaentry.com`;
+- host validation that permits `brightflag-mcp.tqaentry.com`, `localhost`, and the container alias
+  used by the healthcheck;
+- a healthcheck compatible with that host validation;
+- a self-contained `extra_hosts` mapping of `auth.tqaentry.com` to `host-gateway`, so the container
+  can discover and fetch HTTPS Keycloak JWKS without modifying the shared Caddy host deployment;
+- full payment configuration, including a named `BrightFlag__Authorization__MarkInvoicePaidRoles__0`
+  value alongside the corresponding read role;
+- retirement by the future Prompt 19 application of `deploy/local/compose.yaml`, its Caddy
+  template, `manual-gates.md`, every `deploy/local/scripts/` deployment script, and
+  `docs/deploy-local.md`; the prompt replaces them with the LocalAI-owned deployment and marks any
+  retained deployment reference as superseded and inert;
+- deliberate omission of Prompt 17's container user, read-only root filesystem, capability drop,
+  no-new-privileges, `tmpfs`, CPU/memory limits, and log rotation from this open home-lab Compose;
 - a configurable private repository URL and Git ref;
 - resolving the requested ref once to a full commit before the build;
 - building and tagging the exact resolved commit, recording the requested ref, commit, and image
@@ -150,12 +179,17 @@ Prompt 19 requires:
 
 ## Workstream 4 — Update Builder sequencing and narrative
 
-1. Add Stages 18 and 19 to the builder README and `plans/README.md`.
+1. Add Stages 18 and 19 to the builder README and the table and open-decisions list in
+   `plans/README.md`, updating its stated count.
 2. State that both run after Stage 17 and override only the named home-lab decisions.
 3. Keep existing prompt text and historical narrative entries unchanged.
-4. Add a new narrative fragment for the accepted design when implementation begins.
-5. Compile `Narrative.md` from fragments; never edit it directly.
-6. Validate prompt/plan pairing, stage boundaries, indexes, and 100-column wrapping.
+4. For the Builder decision pull request, apply `narrative-required` before merge and complete the
+   three `## Narrative …` sections from the pull-request template. Project Narrative creates the
+   follow-up fragment pull request; hand-write a fragment only for a missed entry or correction.
+5. For LocalAI, update its hand-maintained reverse-chronological `Narrative.md` under that
+   repository's instructions.
+6. Compile the Builder `Narrative.md` from fragments; never edit it directly.
+7. Validate prompt/plan pairing, stage boundaries, indexes, open decisions, and 100-column wrapping.
 
 ## Workstream 5 — Add the LocalAI deployment owner
 
@@ -166,32 +200,43 @@ The script will:
 
 1. Accept repository URL, Git ref, work directory, auth mode, Keycloak user, canonical hostname,
    and LocalStack secret identifiers.
-2. Resolve the supplied Git ref once to a full 40-character commit using transient repository
-   authentication.
-3. Build that exact commit with a transient BuildKit `GIT_AUTH_TOKEN` secret and a commit-derived
+2. Require Git for Windows and the AWS CLI in preflight.
+3. Resolve the supplied Git ref once to a full 40-character commit using `git ls-remote` with
+   `GIT_ASKPASS`, a credential helper, or an equivalent mechanism that keeps the credential out of
+   the repository URL and process arguments.
+4. Build that exact commit with a transient BuildKit `GIT_AUTH_TOKEN` secret, a commit-derived
    image tag.
-4. Never persist that GitHub credential in LocalStack, Compose, generated files, or logs.
-5. Generate and store a cryptographic fixed MCP token when absent.
-6. Generate and store a cryptographic cursor-signing key when absent.
-7. Refuse deployment until the BrightFlag integration-test token has been seeded.
-8. Reuse all three values until explicit rotation is requested.
-9. Retrieve secrets without printing their values.
-10. Atomically materialise required runtime files under `C:\mcp\brightflag\secrets`.
-11. Apply and verify restrictive NTFS ACLs.
-12. Generate the Compose project under `C:\mcp\brightflag`.
-13. Configure exactly one authentication mode without an environment/profile restriction.
-14. Enable both read and payment capabilities in either mode.
-15. Attach only to `mcp-public` and expose only an internal container port.
-16. Own only the BrightFlag Caddy fragment under `C:\mcp-host\caddy\conf.d`.
-17. Validate the complete Caddy configuration before reloading it.
-18. Preserve Caddy, Keycloak, PostgreSQL, LocalStack, OntologyService, all unrelated fragments,
+5. Pass the resolved commit as `SOURCE_REVISION` so the image label reports the built source.
+6. Never persist the GitHub credential in LocalStack, Compose, generated files, logs, or command
+   arguments.
+7. Generate and store a cryptographic fixed MCP token when absent.
+8. Generate and store a cryptographic cursor-signing key when absent.
+9. Refuse deployment until the BrightFlag integration-test token has been seeded.
+10. Reuse all three values until explicit rotation is requested.
+11. Retrieve secrets without printing values and redact AWS CLI errors.
+12. Atomically materialise required runtime files under `C:\mcp\brightflag\secrets`.
+13. Apply and verify restrictive NTFS ACLs.
+14. Generate the Compose project under `C:\mcp\brightflag`, including its healthcheck and the
+    deliberate open-home-lab omissions named above.
+15. Configure exactly one authentication mode without an environment/profile restriction.
+16. Enable both read and payment capabilities in either mode.
+17. Attach only to `mcp-public` and expose only an internal container port.
+18. Own only the BrightFlag Caddy fragment under `C:\mcp-host\caddy\conf.d`.
+19. Validate the complete Caddy configuration by read-only `caddy validate` execution in the shared
+    Caddy container, then reload it without restarting the shared service.
+20. Preserve Caddy, Keycloak, PostgreSQL, LocalStack, OntologyService, all unrelated fragments,
     Jamie's SSH access, and unrelated containers.
-19. When the requested ref resolves to a new commit, build its commit-tagged image and recreate
+21. Preserve every existing mapper, scope, grant, and flow on the shared `mcp-client` other than
+    the explicitly added BrightFlag audience and role-claim mappings.
+22. When the requested ref resolves to a new commit, build its commit-tagged image and recreate
     only BrightFlag.
-20. Record the requested ref, resolved commit, image tag, image ID, and previous deployable image.
-21. Roll back by recreating only BrightFlag from the retained previous image, without rebuilding a
+23. Record the requested ref, resolved commit, image tag, image ID, and previous deployable image
+    in `C:\mcp\brightflag\deployment-state.json`.
+24. Retain the recorded current and previous image tags; do not prune them automatically, and state
+    that manual image pruning can remove rollback capability.
+25. Roll back by recreating only BrightFlag from the retained previous image, without rebuilding a
     moving ref.
-22. Support idempotent reruns, explicit rotation, diagnostics, and BrightFlag-only stop/removal.
+26. Support idempotent reruns, explicit rotation, diagnostics, and BrightFlag-only stop/removal.
 
 ## Workstream 6 — Configure Keycloak idempotently
 
@@ -204,12 +249,18 @@ The LocalAI deployment path ensures:
 - an exact `brightflag-mcp` audience mapper;
 - roles `brightflag.read` and `brightflag.payment`;
 - both roles assigned to the named development user;
+- a hardcoded `tid` claim mapper containing the exact configured BrightFlag tenant value;
+- a mapper that projects the `brightflag-mcp` client roles into a flat top-level `roles` array;
 - no public-client secret; and
 - no password, access token, or refresh token in generated configuration.
 
 The caller obtains a token through device flow or its helper and supplies the token to the MCP
 client as an `Authorization: Bearer` header. The plaintext MCP endpoint does not weaken the HTTPS
-Keycloak issuer, discovery, token, or JWKS endpoints.
+Keycloak issuer, discovery, token, or JWKS endpoints. The generated BrightFlag Compose uses
+`extra_hosts: auth.tqaentry.com:host-gateway` so this HTTPS issuer remains reachable from inside the
+container. With the shared caller client, its audience mapper is not a service-separation boundary;
+the required BrightFlag roles are the boundary. Future dedicated-client separation and additional
+hardening remain in issue [#46][issue-46].
 
 ## Review disposition
 
@@ -219,6 +270,12 @@ The 2026-08-02 adversarial review produced these changes to the plan:
   trusted-proxy deployment; and
 - resolve a requested Git ref before building, use a commit-derived image identity, retain the
   previous image, and make rollback independent of a moving ref.
+
+The subsequent review also requires functional Keycloak `tid` and flat-role mappers, self-contained
+container-to-issuer resolution, explicit retirement of Prompt 17 deployment artifacts, and separate
+Builder, LocalAI, and future-prompt verification classes. It records the shared-client audience
+limitation, fixed-token/LocalStack consequences, source-revision label, AWS CLI prerequisite,
+healthcheck host set, narrative workflow, and deployment-state record explicitly.
 
 The following adversarial recommendations are declined. These are explicit home-lab/dev/test
 decisions and require no further mitigation in this plan:
@@ -239,36 +296,63 @@ These follow-ups provide visibility and do not block the home-lab deployment pla
 - [#46 — Finalize the open Keycloak home-lab caller contract][issue-46]; and
 - [#47 — Review LocalStack secret bootstrap and cursor-key rotation][issue-47].
 
-The initial work still configures the Caddy matcher, the shared-realm Keycloak option, and the
+The initial work configures the Caddy matcher, a functioning shared-realm Keycloak option, and the
 minimum LocalStack secret lifecycle described above. End-to-end source-address proof, further
 Keycloak client separation, and secret-lifecycle hardening are deferred to those issues.
 
 ## Verification plan
 
-### Repository checks
+### Builder-repository checks
 
 - prompt and plan pair one-to-one;
 - plan sections follow the binding builder structure;
+- Builder README and `plans/README.md` table and open-decisions list include both stages;
 - Markdown wraps at 100 columns;
 - narrative compilation and validation pass;
+- the Builder decision pull request carries `narrative-required` and all three required narrative
+  sections; and
+- no new diffs appear in the three read-only repositories relative to the recorded baselines.
+
+### LocalAI checks
+
 - PowerShell parses successfully;
 - generated Compose contains no unresolved placeholders or secret values;
-- the model contains one BrightFlag container, no published backend port, and `mcp-public`;
-- auth modes are mutually exclusive;
-- fixed-token mode has no environment/profile restriction;
-- the explicit plaintext mode accepts the HTTP external resource URI without claiming HTTPS;
-- the build uses the recorded full commit rather than re-reading a moving ref; and
-- no new diffs appear in the three read-only repositories relative to the recorded baselines.
+- generated Compose declares one BrightFlag container, no published backend port, `mcp-public`, the
+  expected healthcheck, the permitted host set, and the `auth.tqaentry.com:host-gateway` mapping;
+- generated Compose deliberately omits the listed Prompt 17 container hardening and resource-limit
+  settings;
+- generated Caddy fragment uses the explicit HTTP site and private-source matcher without claiming
+  that its effectiveness is proven;
+- the deployment-state record contains the requested ref, full resolved commit, image tag, image
+  ID, and previous image; and
+- a build from a full commit passes `SOURCE_REVISION` and reports that commit in its image label.
+
+### Future Prompt 18 and 19 implementation checks
+
+These checks run only when their prompts are later applied to `BrightFlagProxyMCPServer`; they are
+not claims about the Builder-only change:
+
+- exactly one authentication branch is reachable after startup selection, with no fallback;
+- fixed-token mode constructs the configured static caller identity and grants both capabilities;
+- Keycloak validation accepts the configured `tid`, flat `roles`, issuer, and audience contract;
+- the explicit plaintext mode accepts the HTTP resource URI without claiming HTTPS;
+- the server deployment no longer has an active Prompt 17 `deploy/local` deployment owner; and
+- full payment configuration names both read and mark-paid role values.
 
 ### Manual gates on `ai-mcp-server`
 
 - a selected under-development branch builds and its resolved revision is recorded;
+- a selected full commit builds through BuildKit and the resulting image label reports that commit;
 - LocalStack remains usable from permitted LAN machines;
 - the three secrets exist, materialise, and are consumed without being embedded in Compose;
 - fixed-token mode grants read and payment access;
-- Keycloak device flow grants read and payment access;
+- a decoded device-flow token records only `iss`, `aud`, `tid`, and flat `roles`, and Keycloak
+  device flow grants read and payment access;
+- discovery and JWKS retrieval succeed from inside the BrightFlag container through
+  `auth.tqaentry.com`;
 - neither mode falls back to the other;
 - the canonical plaintext endpoint works from a LAN client;
+- the healthcheck succeeds with its permitted host value;
 - the backend is unreachable directly;
 - Streamable HTTP responses are not buffered;
 - advancing and rebuilding a branch replaces only BrightFlag and retains its previous image;
