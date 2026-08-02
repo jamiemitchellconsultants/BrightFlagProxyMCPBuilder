@@ -33,6 +33,7 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [22](#entry-make-prompt-8-rollover-tests-deterministic) | 2026-07-31 | Make Prompt 8 rollover tests deterministic | product | Correct Prompt 8 and its Stage 8 plan to require two proof layers. Dedicated live-provider tests exercise actual loopback HTTP retrieval and fail-closed unavailability. |
 | [23](#entry-add-local-deployment-runbook-stage) | 2026-07-31 | Add local deployment runbook stage | product | Add optional Stage 15 after Stage 14. |
 | [24](#entry-replace-runner-deployment-with-local-pull) | 2026-08-01 | Replace runner deployment with local pull | product | Retire every GitHub-triggered local deployment and retain only GitHub-hosted CI and verified, digest-pinned GHCR publication. Deploy through a local PowerShell entry point that accepts an exact digest and revision. |
+| [25](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial reviews. |
 
 ---
 
@@ -1278,3 +1279,79 @@ and unrelated services are preserved. Real-secret deployment fails closed until 
 unreachable from the LAN. BrightFlag no longer owns an nginx listener or router-specific isolation;
 its Caddy route becomes the service-specific cut-off, and shared Caddy, Keycloak, LocalStack,
 PostgreSQL, and `edge_net` remain externally owned infrastructure.
+
+---
+
+<a id="entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review"></a>
+
+## Entry 25 — 2026-08-02 — Prepare the ai-mcp-server development deployment for adversarial review
+
+*Kind: architecture. Status: proposed.*
+
+## Context
+
+The requested home-lab development path differs from Stage 17 in authentication, image sourcing,
+payment enablement, network names, LocalStack exposure, Keycloak realm, and transport security. The
+existing prompts must remain historical, BrightFlag server changes must still arrive through later
+builder prompts, and LocalAI must own the Windows host deployment.
+
+Implementing those decisions directly would make it difficult to distinguish a defect in the plan
+from a defect introduced while applying it. A standalone artifact was needed so another reviewer
+can challenge the cross-repository boundaries, secret lifecycle, full-access payment behavior,
+plaintext LAN routing, Keycloak flow, and production isolation before any numbered prompt or host
+script is written.
+
+The review found an inaccurate HTTPS trusted-proxy model for the plaintext endpoint, a moving-ref
+build race, and several areas where a production-oriented design would add restrictions outside
+the deliberately open home-lab requirement.
+
+A second review found that Keycloak could not function without the server's required `tid` and flat
+`roles` claim mappings or a route from the BrightFlag container to the HTTPS issuer. It also found
+an active Prompt 17 deployment owner, incorrectly grouped verification, and several missing
+implementation details and plain-language consequences.
+
+## Decision
+
+Record a proposed implementation plan under `reviews/` rather than adding a numbered stage before
+review. The plan proposes two later stages: one for exclusive fixed-token or Keycloak
+authentication with full home-lab capabilities, and one for the `ai-mcp-server` Git-ref deployment.
+It also assigns the Windows deployment script and shared-infrastructure integration to LocalAI.
+
+The review brief asks an adversarial reviewer to test assumptions and contradictions without
+editing the plan or implementation repositories. Existing prompts and the BrightFlag server remain
+unchanged at this point.
+
+Revise the plan to add an explicit plaintext application transport and to resolve and build an
+exact commit with retained-image rollback. Do not add production-profile restrictions to the
+fixed-token shortcut or rewrite Prompt 17 history. Preserve the Prompt 17 LAN-only Caddy source
+policy, but defer its public-hostname verification, the final Keycloak caller contract, and further
+LocalStack secret-lifecycle work to issues [45][issue-45], [46][issue-46], and [47][issue-47]
+respectively.
+
+Promote the functional Keycloak requirements into the initial plan: map the configured tenant to
+`tid`, project BrightFlag client roles into a flat `roles` claim, and map `auth.tqaentry.com` to the
+host gateway inside the BrightFlag container. Prompt 19 must retire the old server-local deployment
+owner through its future application. Keep shared-client separation and additional Keycloak
+hardening in issue [46][issue-46], retain issue [45][issue-45] as a non-blocking proof gap, and
+state the accepted LocalStack and fixed-token consequences without adding mitigation.
+
+## Consequences
+
+The agreed direction is now reviewable as one bounded artifact, including the places where it
+overrides Stage 17. No numbered prompt or deployment script exists yet, so an adverse finding can
+change the proposed plan without rewriting prompt history or unwinding implementation work.
+
+The plan now makes the moving-ref build reproducible while leaving the fixed-token and plaintext
+home-lab paths intentionally open. The three deferred issues provide visibility but do not block
+the initial deployment plan.
+
+The Keycloak option is now specified as functional rather than deferred. The revised verification
+separates Builder, LocalAI, and future server-prompt checks so no skipped server implementation
+check is described as passing.
+
+The plan itself is not approval to implement. A later decision must accept or correct it before the
+builder stages and LocalAI script are created.
+
+[issue-45]: https://github.com/jamiemitchellconsultants/BrightFlagProxyMCPBuilder/issues/45
+[issue-46]: https://github.com/jamiemitchellconsultants/BrightFlagProxyMCPBuilder/issues/46
+[issue-47]: https://github.com/jamiemitchellconsultants/BrightFlagProxyMCPBuilder/issues/47
