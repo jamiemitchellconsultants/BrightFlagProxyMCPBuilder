@@ -33,7 +33,8 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [22](#entry-make-prompt-8-rollover-tests-deterministic) | 2026-07-31 | Make Prompt 8 rollover tests deterministic | product | Correct Prompt 8 and its Stage 8 plan to require two proof layers. Dedicated live-provider tests exercise actual loopback HTTP retrieval and fail-closed unavailability. |
 | [23](#entry-add-local-deployment-runbook-stage) | 2026-07-31 | Add local deployment runbook stage | product | Add optional Stage 15 after Stage 14. |
 | [24](#entry-replace-runner-deployment-with-local-pull) | 2026-08-01 | Replace runner deployment with local pull | product | Retire every GitHub-triggered local deployment and retain only GitHub-hosted CI and verified, digest-pinned GHCR publication. Deploy through a local PowerShell entry point that accepts an exact digest and revision. |
-| [25](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial reviews. |
+| [25](#entry-address-ai-mcp-server-adversarial-review) | 2026-08-02 | Address ai-mcp-server adversarial review | product | Revise the proposed plan to require flat Keycloak `tid` and `roles` claims, container-to-issuer host-gateway routing, later retirement of the Prompt 17 server-local deployment artifacts, deterministic Git-ref build state, and correctly… |
+| [26](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial reviews. |
 
 ---
 
@@ -1282,9 +1283,29 @@ PostgreSQL, and `edge_net` remain externally owned infrastructure.
 
 ---
 
+<a id="entry-address-ai-mcp-server-adversarial-review"></a>
+
+## Entry 25 — 2026-08-02 — Address ai-mcp-server adversarial review
+
+*Kind: product. Status: accepted.*
+
+## Context
+
+The initial plan correctly captured the intended home-lab authority boundaries, but adversarial review found that the proposed Keycloak option could not satisfy the existing server claim and issuer-resolution contract. The review also exposed an active Prompt 17 deployment owner, a moving-ref implementation gap, and verification claims that the Builder-only work could not prove.
+
+## Decision
+
+Revise the proposed plan to require flat Keycloak `tid` and `roles` claims, container-to-issuer host-gateway routing, later retirement of the Prompt 17 server-local deployment artifacts, deterministic Git-ref build state, and correctly scoped verification. Preserve the intentionally open fixed-token, plaintext LAN, and LAN-accessible LocalStack decisions; describe their consequences plainly rather than adding production controls.
+
+## Consequences
+
+Keycloak is now specified as a functioning initial authentication option. The plan remains proposed rather than implementation approval, and later prompts remain the only route for changes to BrightFlagProxyMCPServer. Source-address proof, shared-client separation, and later secret-lifecycle work remain visible in issues #45, #46, and #47.
+
+---
+
 <a id="entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review"></a>
 
-## Entry 25 — 2026-08-02 — Prepare the ai-mcp-server development deployment for adversarial review
+## Entry 26 — 2026-08-02 — Prepare the ai-mcp-server development deployment for adversarial review
 
 *Kind: architecture. Status: proposed.*
 
