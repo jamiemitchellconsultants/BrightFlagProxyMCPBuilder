@@ -30,6 +30,7 @@ OpenAPI document read on 2026-07-28 (114 operations, 70 schemas, byte-identical 
 | [17 — shared local deployment][plan-17] | [17][prompt-17] |
 | [18 — home-lab fixed-token authentication][plan-18] | [18][prompt-18] |
 | [19 — `ai-mcp-server` development deployment][plan-19] | [19][prompt-19] |
+| [19L — restore LocalAI for Prompt 20][plan-19l] | [19L][prompt-19l] |
 | [20 — shared home-lab audience and MCP OAuth][plan-20] | [20][prompt-20] |
 
 [plan-16]: 16-retire-github-runner-local-deployment.md
@@ -40,6 +41,8 @@ OpenAPI document read on 2026-07-28 (114 operations, 70 schemas, byte-identical 
 [prompt-18]: ../prompts/18-home-lab-fixed-token-authentication.md
 [plan-19]: 19-ai-mcp-server-development-deployment.md
 [prompt-19]: ../prompts/19-ai-mcp-server-development-deployment.md
+[plan-19l]: 19l-restore-localai-for-prompt-20.md
+[prompt-19l]: ../prompts/19l-restore-localai-for-prompt-20.md
 [plan-20]: 20-keycloak-shared-audience-mcp-oauth.md
 [prompt-20]: ../prompts/20-keycloak-shared-audience-mcp-oauth.md
 
@@ -63,13 +66,13 @@ text and the historical narrative are not rewritten. Stage 19 is the one stage i
 enables payment, against BrightFlag's integration-test environment only, and neither stage makes a
 contingent stage apply.
 
-Stage 20 runs after Stage 19 and overrides only the Stage 18 and 19 decisions named in the
-supersession table in Prompt 20. It is the stage that makes the deployment reachable from a tier-1
-conversational agent: one audience shared across the home lab, the metadata document served where
-clients actually request it, an advertised scope that is optional rather than assumed, and the
-endpoint moved from a plaintext LAN site to public HTTPS behind the shared Caddy. Stage 18's
-fixed-token mode survives it unchanged — the agents are a new population of callers, not a
-replacement for the old one.
+Stage 19L is played in LocalAI after Stage 19 and before Stage 20. It selectively restores the
+Prompt 20 BrightFlag deployment values after the Stage 19 replay while preserving independent
+shared-host and other-MCP preparation. Stage 20 then runs in the server repository and overrides
+only the Stage 18 and 19 decisions named in its supersession table. It makes the deployment
+reachable from a tier-1 conversational agent: one audience shared across the home lab, metadata
+served where clients actually request it, an optional advertised scope, and public HTTPS behind
+shared Caddy. Stage 18's fixed-token mode survives it unchanged.
 
 Each plan follows one structure: Context, Preconditions, Scope in, Scope explicitly out, Work items,
 Tests mapped one-to-one onto the prompt's own "Prove" list, Acceptance checks with runnable
@@ -78,7 +81,7 @@ the sequence's value comes from stopping at each boundary.
 
 ## Open decisions the plans surface
 
-Eleven points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
+Twelve points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
 position:
 
 - **The invoice-summary join window (Plan 05).** `getInvoiceSummaryList` exposes no `invoiceID`
@@ -132,3 +135,8 @@ position:
   artifacts outright, keeping only the server-side transport, host-validation, and capability
   configuration the external deployment requires, and checking the boundary with a grep that fails
   if any retired reference still reads as current.
+- **How to restore LocalAI without erasing independent work (Plan 19L).** Replaying Stage 19 changes
+  BrightFlag-specific parts of a repository that already contains shared-host preparation for Stage
+  20 and another MCP server. Plan 19L restores values semantically in four bounded areas, forbids a
+  whole-file or historical-tree restore, treats shared infrastructure as a verified prerequisite,
+  and stops rather than choosing silently when independent work genuinely conflicts.

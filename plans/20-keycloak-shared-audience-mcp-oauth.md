@@ -14,11 +14,13 @@ mainstream open-source desktop and web agents. None of them can be handed a toke
 pre-registered: each invents its own OAuth client the first time a user connects it, reads the
 server's `401` to find the authorization server, and runs authorization-code + PKCE itself.
 
-Stage 20 is what that costs. The audience becomes one value shared by every MCP server in the lab,
-the endpoint moves to public HTTPS behind the shared Caddy, the metadata document has to be served
-where clients actually look for it, and the advertised scope becomes a claim about the authorization
-server rather than an assumption. The fixed-token mode survives untouched — the agents are a new
-population of callers, not a replacement for the old one.
+Stage 19L first restores those deployment-side values selectively in LocalAI, without discarding
+independent shared-host or other-MCP work. Stage 20 is the server-side cost. The audience becomes
+one value shared by every MCP server in the lab, the endpoint moves to public HTTPS behind the
+shared Caddy, the metadata document has to be served where clients actually look for it, and the
+advertised scope becomes a claim about the authorization server rather than an assumption. The
+fixed-token mode survives untouched — the agents are a new population of callers, not a
+replacement for the old one.
 
 The realm side is already built and reviewed in LocalAI ([LocalAI#29][localai-29]). This stage does
 not configure Keycloak; it stops assuming things about it that are no longer true.
@@ -27,6 +29,8 @@ not configure Keycloak; it stops assuming things about it that are no longer tru
 
 - Stages 1–11 and 17–19 are merged and green. Stage 18's exclusive two-mode selection and Stage 19's
   LocalAI-owned deployment are both in place.
+- Stage 19L is applied and green in LocalAI, restoring the Prompt 20 deployment values without
+  discarding its independent shared-host and other-MCP preparation.
 - LocalAI's `setup-mcp-host-windows.ps1` has created the `homelab` realm, the `homelab-mcp` audience
   client, the `mcp-audience` realm-default client scope minting constant `tid` and `roles`, the
   capability client scopes, the `mcp-client` fallback caller, and the dynamic-registration Trusted
