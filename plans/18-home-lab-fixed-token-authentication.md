@@ -81,7 +81,7 @@ Stage 19.
 
 Record in `docs/` the single shared identity's effect on audit attribution, rate-limit bucketing,
 and caller-bound plan scope; the absence of expiry, revocation, and tenant-claim corroboration on
-the fixed path; and the LAN readability of the LocalStack-held token and cursor key. State them as
+the fixed path; and the exposure of the store the token and cursor key are read from. State them as
 accepted for this network, with no compensating control implied.
 
 ## Tests
@@ -152,9 +152,9 @@ deployment change, retire any `deploy/local` artifact, move to the shared `homel
   records the shared subject, not a compensating control.
 - The token has no expiry or revocation, so rotation is a file replacement plus a restart. Treat a
   suspected disclosure as requiring rotation of both the token and the cursor-signing key.
-- LocalStack holds the token unauthenticated on the LAN, so the practical strength of this mode is
-  physical control of the network. Do not let the constant-time comparison read as though it were
-  the boundary.
+- The practical strength of this mode is whatever protects the store the token is read from, which
+  this stage presumes is the network rather than a credential; Stage 19 establishes the deployment
+  that settles it. Do not let the constant-time comparison read as though it were the boundary.
 - Suppressing protected-resource metadata in fixed-token mode changes what an OAuth-capable client
   discovers. That is intended here; do not let it leak into Keycloak mode, where the metadata is
   still the contract.
