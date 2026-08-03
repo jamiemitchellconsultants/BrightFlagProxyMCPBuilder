@@ -4,7 +4,8 @@ Using the reusable contract and the artifacts produced by Prompts 1â€“11 and 17â
 `BrightFlagProxyMCPServer` reachable from a tier-1 conversational agent authenticating against the
 shared home-lab Keycloak realm.
 
-Apply this stage after Prompt 19. It does not depend on or authorise contingent Prompts 12 or 13.
+Apply this stage after Prompt 19 in the server repository and Prompt 19L in LocalAI. It does not
+depend on or authorise contingent Prompts 12 or 13.
 
 This stage changes caller-identity configuration, OAuth discovery, and the transport posture of the
 home-lab deployment. It must not widen the MCP surface by a single tool, resource, or argument, must
@@ -22,9 +23,11 @@ token and cannot be pre-registered: it invents its own OAuth client the first ti
 it, discovers where to send them from the server's own `401`, and runs the flow itself. Everything
 below follows from that one fact.
 
-The deployment side is already built and reviewed in the separately managed LocalAI repository
-([LocalAI#29][localai-29]), which now owns the realm, the shared audience, the claim mappers and the
-dynamic-registration policy. This stage brings the server into line with it.
+The deployment side was built and reviewed in the separately managed LocalAI repository
+([LocalAI#29][localai-29]). Prompt 19L selectively restores that BrightFlag deployment shape after
+Prompt 19 without discarding later shared-host or other-MCP work. LocalAI owns the realm, shared
+audience, claim mappers and dynamic-registration policy. This stage brings the server into line
+with it.
 
 ## What this stage supersedes
 

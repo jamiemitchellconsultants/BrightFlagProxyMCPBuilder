@@ -58,6 +58,7 @@ references do not move:
 - [Add home-lab fixed-token authentication](prompts/18-home-lab-fixed-token-authentication.md)
 - [Deploy the development server on
   `ai-mcp-server`](prompts/19-ai-mcp-server-development-deployment.md)
+- [Restore LocalAI for Prompt 20](prompts/19l-restore-localai-for-prompt-20.md)
 - [One shared home-lab audience, and an OAuth flow a conversational agent can
   complete](prompts/20-keycloak-shared-audience-mcp-oauth.md)
 
@@ -80,13 +81,16 @@ home-lab decisions listed in Prompt 19's supersession table; every other Prompt 
 stands, and Prompt 17's own text is not rewritten. Nothing in either stage describes a production
 deployment or a production authentication strategy.
 
-Prompt 20 runs after Prompt 19 and overrides only the Prompt 18 and 19 decisions named in its own
+Prompt 19L is played separately in LocalAI after Prompt 19 and before Prompt 20. It selectively
+restores the deployment-side values Prompt 20 requires while preserving independently prepared
+shared-host and other-MCP work; it never checks out historical files wholesale. Prompt 20 then runs
+in the server repository and overrides only the Prompt 18 and 19 decisions named in its own
 supersession table. The home lab's callers turned out to be tier-1 conversational agents, which
-cannot be handed a token in a configuration file and cannot be pre-registered — each invents its own
-OAuth client at first connection and runs the flow itself. So the audience becomes one value shared
-by every MCP server in the lab, the protected-resource metadata is served where clients actually
-request it, the advertised scope becomes optional rather than assumed, and the endpoint moves from a
-plaintext LAN site to public HTTPS behind the shared Caddy.
+cannot be handed a token in a configuration file and cannot be pre-registered — each invents its
+own OAuth client at first connection and runs the flow itself. So the audience becomes one value
+shared by every MCP server in the lab, the protected-resource metadata is served where clients
+actually request it, the advertised scope becomes optional rather than assumed, and the endpoint
+moves from a plaintext LAN site to public HTTPS behind the shared Caddy.
 
 Prompt 18's fixed-token mode is **retained** by Prompt 20, not superseded. The agents are an
 additional population of callers, not a replacement for the clients that send a fixed header and run
