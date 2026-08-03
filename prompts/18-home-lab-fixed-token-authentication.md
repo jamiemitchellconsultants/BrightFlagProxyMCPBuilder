@@ -86,11 +86,13 @@ away:
 - **The fixed-token path does not traverse `CallerTokenValidator`.** It has no token expiry, no
   revocation, and no tenant-claim corroboration; subject, tenant, and roles come from static
   reviewed configuration and from nothing else. Rotation means replacing the file and restarting.
-- **The token is only as private as the store it comes from.** In the Prompt 19 deployment it is
-  held in a LocalStack Secrets Manager instance that is unauthenticated and reachable from other LAN
-  machines, alongside the cursor-signing key. Any LAN caller able to read those secrets can obtain
-  both, which makes fixed-token authentication and cursor integrity a LAN trust boundary rather than
-  a cryptographic one.
+- **The token is only as private as the store it comes from.** The server does not control that
+  store. Whatever can read the mounted file, or the store the file is materialised from, holds the
+  credential outright, and the constant-time comparison is not that boundary. This stage presumes
+  the home-lab deployment will keep the token in the same secret store as the cursor-signing key,
+  with readers bounded by the network rather than by a credential. Prompt 19 establishes that
+  deployment and states its actual exposure; the documentation records what the deployment does,
+  not what this stage presumed.
 
 These consequences are accepted for the physically controlled home-lab development network without
 additional mitigation. Record them; do not add a compensating control that was not asked for.
@@ -163,8 +165,8 @@ the shared-client audience limitation that follows from it.
 - Caller authentication is exactly one explicitly selected mode, with four separately named startup
   failures and no fallback path in either direction.
 - Fixed-token mode authenticates one shared configured identity holding both capabilities, and its
-  consequences for audit attribution, rate limiting, plan scoping, expiry, revocation, and LAN
-  secret exposure are documented rather than mitigated.
+  consequences for audit attribution, rate limiting, plan scoping, expiry, revocation, and the
+  exposure of the store the token is read from are documented rather than mitigated.
 - The dedicated Prompt 17 Keycloak realm, public-client contract, claim requirements, and
   protected-resource discovery are unchanged; the shared realm and caller client remain Stage 19's
   work.
