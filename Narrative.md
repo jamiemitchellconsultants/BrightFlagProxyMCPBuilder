@@ -41,6 +41,7 @@ Reviewed fragments are authoritative; this compiled document is their determinis
 | [30](#entry-prepare-ai-mcp-server-development-deployment-for-adversarial-review) | 2026-08-02 | Prepare the ai-mcp-server development deployment for adversarial review | architecture | Save and revise the proposed implementation plan through adversarial reviews. |
 | [31](#entry-correct-prompt-20-to-retain-the-fixed-token-mode) | 2026-08-03 | Correct Prompt 20 to retain the fixed-token mode | correction | Prompt 20 was written as though Prompt 18 had never been applied. Rewritten to assume its predecessors were applied and to say what it overrides: almost all of the conflict is with Prompt 19, not 18. |
 | [32](#entry-frame-prompt-18-s-secret-store-exposure-as-a-presumption-not-a-fact) | 2026-08-03 | Frame prompt 18's secret-store exposure as a presumption, not a fact | product | Hedge the deployment identity, never the severity. |
+| [33](#entry-add-localai-reconciliation-before-prompt-20) | 2026-08-03 | Add LocalAI reconciliation before Prompt 20 | product | Introduce Prompt 19L, played separately in LocalAI after Prompt 19 and before Prompt 20. |
 
 ---
 
@@ -1699,3 +1700,23 @@ the realm move; 19's nearest statement is that the shared caller client's audien
 service-separation boundary, tracked by issue #46. Neither is addressed here.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+---
+
+<a id="entry-add-localai-reconciliation-before-prompt-20"></a>
+
+## Entry 33 — 2026-08-03 — Add LocalAI reconciliation before Prompt 20
+
+*Kind: product. Status: accepted.*
+
+## Context
+
+Prompt 20 deliberately leaves LocalAI untouched because the shared `homelab-mcp` audience, public HTTPS ingress, constant claims, dynamic registration, and issuer alias were independently prepared there. Replaying Prompt 19 correctly restores its earlier BrightFlag deployment boundary, but also rewinds BrightFlag-specific LocalAI values that Prompt 20 assumes. A whole-file or historical-tree restore would risk deleting later shared-host and other-MCP work.
+
+## Decision
+
+Introduce Prompt 19L, played separately in LocalAI after Prompt 19 and before Prompt 20. It restores BrightFlag's Prompt 20 values semantically, treats shared infrastructure as a verified external prerequisite, and forbids merge reversion or wholesale file restoration. It retains Prompt 18 fixed-token authentication and Prompt 19 ownership, build, rollback, secrets, host validation, payment, and open-posture controls. It also requires explicit `CallerIdentity__Mode=Keycloak` and forbids restoring the obsolete claim that fixed-token support is absent.
+
+## Consequences
+
+The sequence gains one cross-repository review boundary, but Prompt 20 remains truthfully server-only and independently prepared LocalAI work is protected. Missing shared-host prerequisites now stop reconciliation instead of causing a duplicate realm or ingress implementation. Prompt 19 remains valid and historical at its own boundary; Prompt 19L selectively prepares its deployment owner for the next server stage.
