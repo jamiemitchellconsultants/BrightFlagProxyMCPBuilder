@@ -30,6 +30,7 @@ OpenAPI document read on 2026-07-28 (114 operations, 70 schemas, byte-identical 
 | [17 — shared local deployment][plan-17] | [17][prompt-17] |
 | [18 — home-lab fixed-token authentication][plan-18] | [18][prompt-18] |
 | [19 — `ai-mcp-server` development deployment][plan-19] | [19][prompt-19] |
+| [20 — shared home-lab audience and MCP OAuth][plan-20] | [20][prompt-20] |
 
 [plan-16]: 16-retire-github-runner-local-deployment.md
 [prompt-16]: ../prompts/16-retire-github-runner-local-deployment.md
@@ -39,6 +40,8 @@ OpenAPI document read on 2026-07-28 (114 operations, 70 schemas, byte-identical 
 [prompt-18]: ../prompts/18-home-lab-fixed-token-authentication.md
 [plan-19]: 19-ai-mcp-server-development-deployment.md
 [prompt-19]: ../prompts/19-ai-mcp-server-development-deployment.md
+[plan-20]: 20-keycloak-shared-audience-mcp-oauth.md
+[prompt-20]: ../prompts/20-keycloak-shared-audience-mcp-oauth.md
 
 † **Contingent stages, not part of version 1.** Stage 12 runs only if corporate governance
 reclassifies this service off the low-use / low-criticality classification under which Stage 8's
@@ -59,6 +62,14 @@ supersession table in Prompt 19, and every unlisted Stage 17 requirement survive
 text and the historical narrative are not rewritten. Stage 19 is the one stage in the sequence that
 enables payment, against BrightFlag's integration-test environment only, and neither stage makes a
 contingent stage apply.
+
+Stage 20 runs after Stage 19 and overrides only the Stage 18 and 19 decisions named in the
+supersession table in Prompt 20. It is the stage that makes the deployment reachable from a tier-1
+conversational agent: one audience shared across the home lab, the metadata document served where
+clients actually request it, an advertised scope that is optional rather than assumed, and the
+endpoint moved from a plaintext LAN site to public HTTPS behind the shared Caddy. Stage 18's
+fixed-token mode survives it unchanged — the agents are a new population of callers, not a
+replacement for the old one.
 
 Each plan follows one structure: Context, Preconditions, Scope in, Scope explicitly out, Work items,
 Tests mapped one-to-one onto the prompt's own "Prove" list, Acceptance checks with runnable

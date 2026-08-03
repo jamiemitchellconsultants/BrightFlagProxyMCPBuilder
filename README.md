@@ -56,7 +56,6 @@ references do not move:
 - [Pull and deploy locally with LocalStack, Keycloak, and shared
   Caddy](prompts/17-local-pull-localstack-keycloak-caddy-deployment.md)
 - [Add home-lab fixed-token authentication](prompts/18-home-lab-fixed-token-authentication.md)
-  (superseded)
 - [Deploy the development server on
   `ai-mcp-server`](prompts/19-ai-mcp-server-development-deployment.md)
 - [One shared home-lab audience, and an OAuth flow a conversational agent can
@@ -81,13 +80,18 @@ home-lab decisions listed in Prompt 19's supersession table; every other Prompt 
 stands, and Prompt 17's own text is not rewritten. Nothing in either stage describes a production
 deployment or a production authentication strategy.
 
-Prompt 20 supersedes Prompt 18 and revises the deployment posture Prompt 19 describes. The home
-lab's callers turned out to be tier-1 conversational agents, which cannot be handed a fixed bearer
-token in a configuration file and which insist on running the OAuth flow themselves — so the fixed
-token is retired unapplied, the audience becomes one value shared by every MCP server in the lab,
-and the endpoint moves to public HTTPS behind the shared Caddy. Apply it after Prompt 19. Prompt 18
-should not be applied at all; if it already was, leave it in place unselected rather than unpicking
-it.
+Prompt 20 runs after Prompt 19 and overrides only the Prompt 18 and 19 decisions named in its own
+supersession table. The home lab's callers turned out to be tier-1 conversational agents, which
+cannot be handed a token in a configuration file and cannot be pre-registered — each invents its own
+OAuth client at first connection and runs the flow itself. So the audience becomes one value shared
+by every MCP server in the lab, the protected-resource metadata is served where clients actually
+request it, the advertised scope becomes optional rather than assumed, and the endpoint moves from a
+plaintext LAN site to public HTTPS behind the shared Caddy.
+
+Prompt 18's fixed-token mode is **retained** by Prompt 20, not superseded. The agents are an
+additional population of callers, not a replacement for the clients that send a fixed header and run
+no OAuth flow. Its bare `Bearer` challenge and its refusal to serve discovery remain exactly right
+for those clients, and the exclusive two-mode selection with no fallback is untouched.
 
 Do not paste every prompt into one message. Each stage introduces one bounded capability and asks
 for executable evidence before the next begins.
