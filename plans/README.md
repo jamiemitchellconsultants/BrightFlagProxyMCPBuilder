@@ -32,6 +32,8 @@ OpenAPI document read on 2026-07-28 (114 operations, 70 schemas, byte-identical 
 | [19 — `ai-mcp-server` development deployment][plan-19] | [19][prompt-19] |
 | [19L — restore LocalAI for Prompt 20][plan-19l] | [19L][prompt-19l] |
 | [20 — shared home-lab audience and MCP OAuth][plan-20] | [20][prompt-20] |
+| [21 — deployable fake BrightFlag upstream][plan-21] † | [21][prompt-21] |
+| [22 — upstream class and ordinary payment][plan-22] | [22][prompt-22] |
 
 [plan-16]: 16-retire-github-runner-local-deployment.md
 [prompt-16]: ../prompts/16-retire-github-runner-local-deployment.md
@@ -45,13 +47,18 @@ OpenAPI document read on 2026-07-28 (114 operations, 70 schemas, byte-identical 
 [prompt-19l]: ../prompts/19l-restore-localai-for-prompt-20.md
 [plan-20]: 20-keycloak-shared-audience-mcp-oauth.md
 [prompt-20]: ../prompts/20-keycloak-shared-audience-mcp-oauth.md
+[plan-21]: 21-fake-upstream-service.md
+[prompt-21]: ../prompts/21-fake-brightflag-upstream.md
+[plan-22]: 22-upstream-class-selection.md
+[prompt-22]: ../prompts/22-upstream-class-and-ordinary-payment.md
 
 † **Contingent stages, not part of version 1.** Stage 12 runs only if corporate governance
 reclassifies this service off the low-use / low-criticality classification under which Stage 8's
 single-instance topology is permitted. Stage 13 depends on Stage 12 — deploying more than one instance
-before Stage 12 lands is the specific defect Stage 12 exists to prevent. Both are written in advance
-so the transformation is a prepared sequence rather than an improvisation, and neither is to be
-implemented speculatively.
+before Stage 12 lands is the specific defect Stage 12 exists to prevent. Stage 21 runs only when a
+deployed instance must be exercised end to end without BrightFlag's integration-test tenant. Each is
+written in advance so that reaching for it is a prepared step rather than an improvisation, and none
+is to be implemented speculatively.
 
 Stages 14 and 15 are superseded. Stage 16 is a corrective stage only for implementations where
 either was applied; it removes the self-hosted runner path while preserving verified GHCR
@@ -74,6 +81,22 @@ reachable from a tier-1 conversational agent: one audience shared across the hom
 served where clients actually request it, an optional advertised scope, and public HTTPS behind
 shared Caddy. Stage 18's fixed-token mode survives it unchanged.
 
+Stage 21 is played against the deployment Stages 17–20 produce, and only when the BrightFlag
+integration-test tenant cannot be used. It hosts Stage 3's fake as a real process so a deployed
+instance can call it, and adds no capability to the server beyond the startup gate that makes
+pointing a deployment at a non-BrightFlag origin a deliberate act. It is not a development
+BrightFlag and enables nothing Stage 19 did not already enable.
+
+Stage 22 runs after Stage 20 and is not contingent, because every deployment has to say which
+BrightFlag it is talking to and until this stage only one of them could. It replaces the unnamed
+origin with a declared upstream class — `Production`, `IntegrationTest`, or `Fake` — validates the
+supplied origin against that declaration, and derives result marking from it. In the same change it
+withdraws the special status Prompts 8 and 19 gave the payment tool: one grant now governs the whole
+surface, and an authenticated caller who holds it reaches all four tools. Every integrity property
+of the payment write survives, including everything in `DESIGN-CALLS.md` §2, which this stage does
+not touch. Selecting `Production` makes a production upstream reachable; it does not discharge the
+contingent Stages 12 and 13, so a production deployment under Stage 22 is a single instance.
+
 Each plan follows one structure: Context, Preconditions, Scope in, Scope explicitly out, Work items,
 Tests mapped one-to-one onto the prompt's own "Prove" list, Acceptance checks with runnable
 commands, Stage boundary, and Risks. Every plan ends by naming what must **not** begin next, because
@@ -81,7 +104,7 @@ the sequence's value comes from stopping at each boundary.
 
 ## Open decisions the plans surface
 
-Twelve points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
+Fourteen points where the prompt sequence leaves a choice, or leaves a gap, and a plan had to take a
 position:
 
 - **The invoice-summary join window (Plan 05).** `getInvoiceSummaryList` exposes no `invoiceID`
@@ -140,3 +163,21 @@ position:
   20 and another MCP server. Plan 19L restores values semantically in four bounded areas, forbids a
   whole-file or historical-tree restore, treats shared infrastructure as a verified prerequisite,
   and stops rather than choosing silently when independent work genuinely conflicts.
+- **Where the payload selector lives (Plan 21).** Something has to choose which pre-defined payload
+  the fake returns, and the obvious design — a scenario header carried from the MCP client through
+  the server — would breach the contract's rule that no header, query string, or path is ever
+  accepted from an MCP argument. Plan 21 puts selection entirely on the fake, in startup
+  configuration plus an admin listener on a separate port, token, and network, so the deployed
+  server under test is bit-for-bit the one that would ship. It also takes the position that pointing
+  a deployment at a non-BrightFlag origin must fail startup in **both** directions rather than warn,
+  because a payment confirmation produced against a fake is the one artifact here that must never
+  read as real.
+- **How far the payment reversal reaches (Plan 22).** Prompt 22 withdraws the payment tool's special
+  status, and the prompt does not enumerate where that status was implemented. Plan 22 takes the
+  position that it reaches exactly three things — Prompt 8's two-capability split, Prompt 8's
+  stricter payment rate limit, and Prompt 19's separately named payment role and integration-test
+  restriction — and reaches nothing in `DESIGN-CALLS.md` §2, whose subject is the write's mechanics
+  and refusal to retry rather than who may call it. The plan also settles the contract gap
+  structurally: the cross-repository name list becomes a generated manifest rather than a completed
+  list, because the list has already been silently incomplete once, across two stages and a reviewed
+  implementation.
