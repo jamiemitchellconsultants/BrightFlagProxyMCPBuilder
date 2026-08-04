@@ -14,7 +14,7 @@ you finish, you will have:
 
 You do not need BrightFlag credentials. The learning sequence begins by acquiring the public
 BrightFlag OpenAPI document as a reviewed, checked-in snapshot. It then uses synthetic invoices and
-batches and a local fake endpoint implementing only the five BrightFlag operations the server is
+batches and a local fake endpoint implementing only the four BrightFlag operations the server is
 allowed to call.
 
 ## 1. Create `MyBrightFlagProxyMCPServer` on GitHub
